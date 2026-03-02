@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AREAS, getTagById, RENTAL_TAGS } from '../data/monsters';
 import { getCollection } from '../lib/storage';
-import type { Tag } from '../types';
 import TagCard from '../components/TagCard';
 
 export default function AreaSelectPage() {

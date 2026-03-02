@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Area, Tag, BallType } from '../types';
 import { rollBallRoulette, attemptCatch, BALL_NAMES, BALL_COLORS } from '../lib/battle';
-import { ALL_TAGS, TYPE_EMOJI, TYPE_COLORS } from '../data/monsters';
+import { ALL_TAGS, TYPE_EMOJI } from '../data/monsters';
 import { pick, shuffle } from '../lib/rng';
 import TagCard from '../components/TagCard';
 
