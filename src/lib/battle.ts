@@ -68,10 +68,10 @@ export function calcCatchGaugeIncrease(damage: number, bossMaxHp: number): numbe
 }
 
 export const BALL_NAMES: Record<BallType, string> = {
-  poke: 'Poké Ball',
-  great: 'Great Ball',
-  ultra: 'Ultra Ball',
-  master: 'Master Ball',
+  poke: '精靈球',
+  great: '超級球',
+  ultra: '高級球',
+  master: '大師球',
 };
 
 export const BALL_COLORS: Record<BallType, string> = {

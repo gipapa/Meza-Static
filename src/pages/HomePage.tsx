@@ -10,14 +10,14 @@ export default function HomePage() {
           MEZA<span className="text-accent">★</span>STATIC
         </h1>
         <p className="text-text-muted text-lg sm:text-xl max-w-lg mb-8 z-10">
-          Battle. Spin. Catch. Collect. <br />
-          <span className="text-primary-light">A fan-made arcade tag-battle experience.</span>
+          對戰。轉盤。捕獲。收藏。 <br />
+          <span className="text-primary-light">粉絲自製的機台卡牌對戰體驗。</span>
         </p>
         <Link
           to="/play"
           className="z-10 px-8 py-3 bg-accent hover:bg-accent-light text-white font-display text-xl rounded-lg transition-all hover:scale-105 hover:shadow-lg hover:shadow-accent/30"
         >
-          START
+          開始遊戲
         </Link>
         {/* Decorative floating elements */}
         <div className="absolute top-20 left-10 text-4xl opacity-20 animate-bounce" style={{ animationDelay: '0s' }}>🔥</div>
@@ -31,22 +31,22 @@ export default function HomePage() {
         <FeatureCard
           to="/play"
           icon="⚔️"
-          title="Battle & Catch"
-          description="Choose an area, battle bosses across 3 rounds, spin the roulette, and catch monsters!"
+          title="對戰 & 捕獲"
+          description="選擇區域，經歷3回合對戰頭目，轉動轉盤，捕獲怪獸！"
           accent="#F43F5E"
         />
         <FeatureCard
           to="/play"
           icon="🎯"
-          title="Catch Now"
-          description="Skip the battle — encounter and catch monsters directly from the wild!"
+          title="快速捕獲"
+          description="跳過對戰 — 直接遇見野生怪獸並嘗試捕獲！"
           accent="#7C3AED"
         />
         <FeatureCard
           to="/collection"
           icon="📦"
-          title="Collection"
-          description="Browse your collected tags, view stats, filter by type and grade."
+          title="收藏"
+          description="瀏覽已收集的卡牌，查看能力值，依屬性與星等篩選。"
           accent="#00FFFF"
         />
       </section>

@@ -35,24 +35,24 @@ export default function ResultPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12 text-center">
-      <h1 className="font-display text-3xl mb-2 neon-text">RESULTS</h1>
+      <h1 className="font-display text-3xl mb-2 neon-text">結果</h1>
 
       {caughtTags.length === 0 ? (
         <div className="my-12">
           <div className="text-5xl mb-4">😢</div>
-          <p className="text-text-muted text-lg">No monsters caught this time...</p>
-          <p className="text-text-muted text-sm mt-2">Keep trying — better luck next round!</p>
+          <p className="text-text-muted text-lg">這次沒有捕獲到怪獸...</p>
+          <p className="text-text-muted text-sm mt-2">繼續加油 — 下次運氣會更好！</p>
         </div>
       ) : (
         <>
           {hasSpecial && (
             <div className="my-4">
               <div className="text-4xl mb-2">🌟✨🌟</div>
-              <p className="font-display text-xl superstar-shimmer">★ RARE CATCH ★</p>
+              <p className="font-display text-xl superstar-shimmer">★ 稀有捕獲 ★</p>
             </div>
           )}
           <p className="text-text-muted mb-6">
-            You caught <span className="text-neon-cyan font-bold">{caughtTags.length}</span> monster{caughtTags.length > 1 ? 's' : ''}!
+            你捕獲了 <span className="text-neon-cyan font-bold">{caughtTags.length}</span> 隻怪獸！
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {caughtTags.map((tag, i) => (
@@ -69,13 +69,13 @@ export default function ResultPage() {
           to="/play"
           className="px-6 py-2 bg-accent hover:bg-accent-light text-white font-display rounded-lg transition-all"
         >
-          🎮 PLAY AGAIN
+          🎮 再玩一次
         </Link>
         <Link
           to="/collection"
           className="px-6 py-2 bg-primary/20 border border-primary/40 text-primary-light font-display rounded-lg hover:bg-primary/30 transition-all"
         >
-          📦 VIEW COLLECTION
+          📦 查看收藏
         </Link>
       </div>
     </div>

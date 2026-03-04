@@ -1,5 +1,5 @@
 import type { Tag } from '../types';
-import { TYPE_COLORS, TYPE_EMOJI } from '../data/monsters';
+import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
 
 interface Props {
   tag: Tag;
@@ -64,7 +64,7 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
               {tag.types.map(t => (
                 <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                   style={{ background: `${TYPE_COLORS[t]}33`, color: TYPE_COLORS[t] }}>
-                  {t}
+                  {TYPE_NAMES_ZH[t] || t}
                 </span>
               ))}
             </div>
@@ -91,8 +91,8 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
           <div className="mt-2 p-1 rounded bg-white/5">
             <div className="font-bold">{tag.move.name}</div>
             <div className="flex justify-between">
-              <span style={{ color: TYPE_COLORS[tag.move.type] }}>{tag.move.type}</span>
-              <span>POW {tag.move.power}</span>
+              <span style={{ color: TYPE_COLORS[tag.move.type] }}>{TYPE_NAMES_ZH[tag.move.type] || tag.move.type}</span>
+              <span>威力 {tag.move.power}</span>
             </div>
           </div>
         </div>

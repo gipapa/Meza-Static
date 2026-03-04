@@ -32,7 +32,7 @@ export default function TrainerPage() {
 
   const save = () => {
     const p: TrainerProfile = {
-      nickname: nickname.trim() || 'Trainer',
+      nickname: nickname.trim() || '訓練家',
       avatarIndex: avatarIdx,
       createdAt: profile?.createdAt || new Date().toISOString(),
     };
@@ -43,27 +43,27 @@ export default function TrainerPage() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12">
-      <h1 className="font-display text-3xl text-center mb-8 neon-text">TRAINER</h1>
+      <h1 className="font-display text-3xl text-center mb-8 neon-text">訓練家</h1>
 
       {editMode ? (
         <div className="bg-bg-card rounded-xl p-6 neon-border">
           <h2 className="font-display text-lg mb-4">
-            {profile ? 'Edit Profile' : 'Create Your Trainer'}
+            {profile ? '編輯個人檔案' : '建立你的訓練家'}
           </h2>
 
           {/* Nickname */}
-          <label className="block text-sm text-text-muted mb-1">Nickname</label>
+          <label className="block text-sm text-text-muted mb-1">昵稱</label>
           <input
             type="text"
             value={nickname}
             onChange={e => setNickname(e.target.value)}
             maxLength={16}
             className="w-full px-3 py-2 bg-bg-dark border border-white/10 rounded-lg text-text-primary focus:border-primary focus:outline-none mb-4"
-            placeholder="Enter nickname..."
+            placeholder="輸入昵稱..."
           />
 
           {/* Avatar */}
-          <label className="block text-sm text-text-muted mb-2">Choose Avatar</label>
+          <label className="block text-sm text-text-muted mb-2">選擇頭像</label>
           <div className="grid grid-cols-8 gap-2 mb-6">
             {AVATARS.map((emoji, i) => (
               <button
@@ -84,7 +84,7 @@ export default function TrainerPage() {
             onClick={save}
             className="w-full py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg transition-all"
           >
-            SAVE
+            儲存
           </button>
         </div>
       ) : profile ? (
@@ -94,22 +94,22 @@ export default function TrainerPage() {
             <div className="text-6xl mb-3">{AVATARS[profile.avatarIndex] || '😎'}</div>
             <h2 className="font-display text-2xl mb-1">{profile.nickname}</h2>
             <p className="text-text-muted text-xs">
-              Trainer since {new Date(profile.createdAt).toLocaleDateString()}
+              訓練家創建日期: {new Date(profile.createdAt).toLocaleDateString()}
             </p>
             <button
               onClick={() => setEditMode(true)}
               className="mt-3 px-3 py-1 text-xs bg-bg-dark border border-white/10 rounded hover:bg-bg-card-hover text-text-muted"
             >
-              ✏️ Edit
+              ✏️ 編輯
             </button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <StatBox label="Battles" value={stats.totalBattles} icon="⚔️" />
-            <StatBox label="Total Catches" value={stats.totalCatches} icon="🎯" />
-            <StatBox label="★5 Stars" value={stats.starCount} icon="⭐" />
-            <StatBox label="★6 Superstars" value={stats.superstarCount} icon="🌟" />
+            <StatBox label="對戰次數" value={stats.totalBattles} icon="⚔️" />
+            <StatBox label="總捕獲數" value={stats.totalCatches} icon="🎯" />
+            <StatBox label="★5 星級" value={stats.starCount} icon="⭐" />
+            <StatBox label="★6 超級星" value={stats.superstarCount} icon="🌟" />
           </div>
         </>
       ) : null}

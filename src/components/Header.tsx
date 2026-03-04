@@ -1,10 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 
 const NAV_ITEMS = [
-  { to: '/play', label: 'Play', icon: '🎮' },
-  { to: '/collection', label: 'Collection', icon: '📦' },
-  { to: '/trainer', label: 'Trainer', icon: '👤' },
-  { to: '/howto', label: 'How To', icon: '📖' },
+  { to: '/play', label: '遊玩', icon: '🎮' },
+  { to: '/collection', label: '收藏', icon: '📦' },
+  { to: '/trainer', label: '訓練家', icon: '👤' },
+  { to: '/howto', label: '遊戲說明', icon: '📖' },
 ];
 
 export default function Header() {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import type { Tag } from '../types';
-import { TYPE_COLORS, TYPE_EMOJI } from '../data/monsters';
+import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
 
 export default function TagDetailPage() {
   const location = useLocation();
@@ -11,8 +11,8 @@ export default function TagDetailPage() {
   if (!tag) {
     return (
       <div className="text-center py-16">
-        <p className="text-text-muted">Tag not found.</p>
-        <Link to="/collection" className="text-primary-light underline text-sm">← Back to Collection</Link>
+        <p className="text-text-muted">找不到卡牌。</p>
+        <Link to="/collection" className="text-primary-light underline text-sm">← 返回收藏</Link>
       </div>
     );
   }
@@ -23,7 +23,7 @@ export default function TagDetailPage() {
   return (
     <div className="max-w-xl mx-auto px-4 py-12">
       <Link to="/collection" className="text-text-muted text-sm hover:text-primary-light mb-4 inline-block">
-        ← Back to Collection
+        ← 返回收藏
       </Link>
 
       <div className="text-center">
@@ -55,14 +55,14 @@ export default function TagDetailPage() {
                 {tag.types.map(t => (
                   <span key={t} className="px-2 py-0.5 rounded-full text-xs font-bold"
                     style={{ background: `${TYPE_COLORS[t]}33`, color: TYPE_COLORS[t] }}>
-                    {t.toUpperCase()}
+                    {(TYPE_NAMES_ZH[t] || t).toUpperCase()}
                   </span>
                 ))}
               </div>
               <div className="text-text-muted text-sm mt-2">PE {tag.pe}</div>
-              {tag.flags.legendary && <div className="text-gold text-xs mt-1">⭐ Legendary</div>}
-              {tag.flags.mythical && <div className="text-accent text-xs">✨ Mythical</div>}
-              <p className="text-text-muted text-xs mt-3">Tap to flip</p>
+              {tag.flags.legendary && <div className="text-gold text-xs mt-1">⭐ 傳說</div>}
+              {tag.flags.mythical && <div className="text-accent text-xs">✨ 幻之</div>}
+              <p className="text-text-muted text-xs mt-3">點擊翻轉</p>
             </div>
 
             {/* Back */}
@@ -73,7 +73,7 @@ export default function TagDetailPage() {
                 border: `2px solid ${typeColor}44`,
               }}
             >
-              <h3 className="font-display text-lg mb-4">{tag.name} — Stats</h3>
+              <h3 className="font-display text-lg mb-4">{tag.name} — 能力值</h3>
               <div className="space-y-3 flex-1">
                 <StatBarLarge label="HP" value={tag.stats.hp} max={300} color="#22C55E" />
                 <StatBarLarge label="ATK" value={tag.stats.atk} max={200} color="#EF4444" />
@@ -83,11 +83,11 @@ export default function TagDetailPage() {
               <div className="mt-4 p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="font-display text-sm mb-1">{tag.move.name}</div>
                 <div className="flex justify-between text-xs">
-                  <span style={{ color: TYPE_COLORS[tag.move.type] }}>{tag.move.type.toUpperCase()}</span>
-                  <span>Power: {tag.move.power}</span>
+                  <span style={{ color: TYPE_COLORS[tag.move.type] }}>{(TYPE_NAMES_ZH[tag.move.type] || tag.move.type).toUpperCase()}</span>
+                  <span>威力: {tag.move.power}</span>
                 </div>
               </div>
-              <p className="text-text-muted text-xs mt-3">Tap to flip</p>
+              <p className="text-text-muted text-xs mt-3">點擊翻轉</p>
             </div>
           </div>
         </div>

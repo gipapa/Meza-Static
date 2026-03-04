@@ -1,67 +1,67 @@
 export default function HowToPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="font-display text-3xl text-center mb-8 neon-text">HOW TO PLAY</h1>
+      <h1 className="font-display text-3xl text-center mb-8 neon-text">遊戲說明</h1>
 
       <div className="space-y-8">
         <Section
           step={1}
           icon="🎮"
-          title="Choose a Mode"
-          content="Start by selecting either Battle & Catch (full experience) or Catch Now (quick mode). Battle & Catch offers higher grade monsters and more rewards."
+          title="選擇模式"
+          content="首先選擇「對戰 & 捕獲」（完整體驗）或「快速捕獲」（快速模式）。對戰 & 捕獲模式提供更高星等的怪獸和更多獎勵。"
         />
 
         <Section
           step={2}
           icon="🗺️"
-          title="Select an Area"
-          content="Each area has a Boss monster and different difficulty levels. Higher difficulty areas (★5~★6) have better rewards but tougher battles. Areas like Starfall Summit have a chance for ★6 Superstar monsters!"
+          title="選擇區域"
+          content="每個區域都有頭目怪獸和不同的難度等級。高難度區域（★5~★6）有更好的獎勵但更強的對手。像「星隕之頂」這樣的區域有機會出現 ★6 超級星怪獸！"
         />
 
         <Section
           step={3}
           icon="⚔️"
-          title="Build Your Team"
-          content="Pick up to 3 Tags from your collection (or use Rental monsters if you're just starting). Each monster has unique stats: ATK, DEF, SPD, and a special move with type advantage."
+          title="組建隊伍"
+          content="從你的收藏中挑選最多3張卡牌（如果剛開始可以使用出租怪獸）。每隻怪獸都有獨特的能力值：ATK、DEF、SPD，以及帶有屬性優勢的特殊招式。"
         />
 
         <Section
           step={4}
           icon="🎰"
-          title="Battle: Roulette & Mash"
-          content="In each of the 3 battle rounds: (1) Choose which monster attacks by tapping their ATTACK button. (2) Stop the Attack Roulette — higher numbers mean more damage! (3) MASH the button (click or press SPACE) to build extra bonus damage. Your damage fills the Catch Gauge."
+          title="對戰：轉盤 & 連打"
+          content="在3回合對戰的每一回合中：(1) 點擊「攻擊」按鈕選擇攻擊的怪獸。(2) 停下攻擊轉盤 — 數字越大傷害越高！(3) 連打按鈕（點擊或按空白鍵）來累積額外傷害。你的傷害會填滿捕獲計量表。"
         />
 
         <Section
           step={5}
           icon="🎯"
-          title="Catch Time"
-          content="After battle, choose one enemy monster to catch. The Ball Roulette determines which ball you throw — Master Ball guarantees a catch! Your Catch Gauge from battle affects success rates."
+          title="捕獲時間"
+          content="對戰結束後，選擇一隻敵方怪獸來捕獲。球種轉盤決定你投擲哪種球 — 大師球保證捕獲！對戰中的捕獲計量表會影響成功率。"
         />
 
         <Section
           step={6}
           icon="🌿"
-          title="Bonus Catch"
-          content="After the main catch, get a Bonus Catch chance! A cursor cycles through grass tiles — stop it at the right time to encounter a wild monster. You get a free Poké Ball throw."
+          title="額外捕獲"
+          content="主要捕獲後，還有額外捕獲機會！游標會在草叢格子間循環 — 在正確的時機停下來遇見野生怪獸。你會獲得一次免費的精靈球投擲。"
         />
 
         <Section
           step={7}
           icon="📦"
-          title="Collect & Grow"
-          content="All caught monsters go to your Collection. View their stats, filter by grade and type, and see both front and back of each Tag. Collect ★5 Star and ★6 Superstar monsters for bragging rights!"
+          title="收藏 & 成長"
+          content="所有捕獲的怪獸會進入你的收藏。查看牠們的能力值、依星等和屬性篩選，還能看到每張卡牌的正面和背面。收集 ★5 星級和 ★6 超級星怪獸來炫耀你的實力！"
         />
 
         <div className="bg-bg-card rounded-xl p-6 border border-primary/20 mt-8">
-          <h3 className="font-display text-lg mb-3 text-primary-light">💡 Tips</h3>
+          <h3 className="font-display text-lg mb-3 text-primary-light">💡 小提示</h3>
           <ul className="space-y-2 text-sm text-text-muted">
-            <li>• ★5 (Star) and ★6 (Superstar) monsters are rare — keep playing!</li>
-            <li>• The <span className="text-neon-cyan">Catch Gauge</span> carries from battle to catch phase — deal more damage for higher catch rates</li>
-            <li>• <span className="text-accent">Master Ball</span> = 100% catch rate, but it's rare in the Ball Roulette</li>
-            <li>• Use <span className="text-primary-light">keyboard SPACE</span> for mashing — it's faster than clicking!</li>
-            <li>• Your collection is saved in browser local storage — no account needed</li>
-            <li>• Export your collection from Settings to keep a backup</li>
+            <li>• ★5（星級）和 ★6（超級星）怪獸非常稀有 — 繼續遊玩吧！</li>
+            <li>• <span className="text-neon-cyan">捕獲計量表</span>從對戰延續到捕獲階段 — 造成更多傷害可提高捕獲率</li>
+            <li>• <span className="text-accent">大師球</span> = 100% 捕獲率，但在球種轉盤中很稀有</li>
+            <li>• 使用<span className="text-primary-light">鍵盤空白鍵</span>來連打 — 比點擊更快！</li>
+            <li>• 你的收藏存儲在瀏覽器本地儲存中 — 不需要帳號</li>
+            <li>• 從設定中匯出你的收藏以保留備份</li>
           </ul>
         </div>
       </div>
@@ -77,7 +77,7 @@ function Section({ step, icon, title, content }: { step: number; icon: string; t
       </div>
       <div>
         <h2 className="font-display text-lg mb-1">
-          <span className="text-text-muted text-sm">Step {step}:</span> {title}
+          <span className="text-text-muted text-sm">步驟 {step}:</span> {title}
         </h2>
         <p className="text-text-muted text-sm leading-relaxed">{content}</p>
       </div>

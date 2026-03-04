@@ -40,7 +40,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const [mashTimeLeft, setMashTimeLeft] = useState(0);
   const [lastDamage, setLastDamage] = useState(0);
   const [turns, setTurns] = useState<TurnRecord[]>([]);
-  const [message, setMessage] = useState('Choose your attacker!');
+  const [message, setMessage] = useState('選擇你的攻擊者！');
   const [showAnim, setShowAnim] = useState(false);
   const [animKey, setAnimKey] = useState(0);
   const mashTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -78,7 +78,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       setShowAnim(true);
       setAnimKey(prev => prev + 1);
       setPhase('damage-anim');
-      setMessage(`${attacker.name} deals ${dmg} damage!`);
+      setMessage(`${attacker.name} 造成了 ${dmg} 點傷害！`);
 
       setTimeout(() => {
         const newHp = Math.max(0, bossHp - dmg);
@@ -94,14 +94,14 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         }]);
 
         if (newHp <= 0) {
-          setMessage('Boss defeated! Moving to catch phase...');
+          setMessage('頭目已擊敗！前往捕獲階段...');
           setPhase('battle-end');
         } else if (turn >= 3) {
-          setMessage('3 rounds complete! Moving to catch phase...');
+          setMessage('3回合完成！前往捕獲階段...');
           setPhase('battle-end');
         } else {
           setPhase('turn-end');
-          setMessage('Round complete!');
+          setMessage('回合結束！');
         }
       }, 1000);
     }
@@ -135,7 +135,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setRouletteDisplay(1);
     setMashCount(0);
     setPhase('roulette');
-    setMessage(`${playerTags[lane].name} attacks! Tap STOP on the roulette!`);
+    setMessage(`${playerTags[lane].name} 攻擊！點擊「停止」來停下轉盤！`);
   };
 
   const stopRoulette = () => {
@@ -144,7 +144,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setRouletteValue(val);
     setRouletteDisplay(val);
     if (rouletteTimer.current) clearInterval(rouletteTimer.current);
-    setMessage(`Roulette: ${val}! Now MASH the button!`);
+    setMessage(`轉盤: ${val}！現在開始連打！`);
     setMashTimeLeft(2500);
     setPhase('mash');
   };
@@ -160,7 +160,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setRouletteValue(null);
     setMashCount(0);
     setPhase('select-attacker');
-    setMessage('Choose your attacker!');
+    setMessage('選擇你的攻擊者！');
   };
 
   // Keyboard mash support
@@ -183,10 +183,10 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       {/* Top: Turn & Info */}
       <div className="flex justify-between items-center mb-4">
         <div className="font-display text-sm">
-          <span className="text-text-muted">AREA:</span> {area.emoji} {area.name}
+          <span className="text-text-muted">區域:</span> {area.emoji} {area.name}
         </div>
         <div className="font-display text-sm">
-          <span className="text-text-muted">ROUND</span>{' '}
+          <span className="text-text-muted">回合</span>{' '}
           <span className="text-accent text-xl">{turn}</span>
           <span className="text-text-muted">/3</span>
         </div>
@@ -214,7 +214,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
               {TYPE_EMOJI[boss.types[0]] || '⚪'}
             </div>
             <div className="font-display text-lg">{boss.name}</div>
-            <div className="text-xs text-gold mb-2">{'★'.repeat(boss.grade)} BOSS</div>
+            <div className="text-xs text-gold mb-2">{'★'.repeat(boss.grade)} 頭目</div>
             {/* HP Bar */}
             <div className="w-48 mx-auto">
               <div className="flex justify-between text-xs mb-1">
@@ -240,7 +240,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       {/* Catch Gauge */}
       <div className="mb-4">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-text-muted">CATCH GAUGE</span>
+          <span className="text-text-muted">捕獲計量表</span>
           <span className="text-neon-cyan">{Math.round(catchGauge)}%</span>
         </div>
         <div className="h-2 bg-white/10 rounded-full overflow-hidden">
@@ -257,7 +257,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       <div className="flex justify-center gap-6 mb-6">
         {/* Roulette */}
         <div className="text-center">
-          <div className="text-xs text-text-muted mb-1 font-display">ATTACK ROULETTE</div>
+          <div className="text-xs text-text-muted mb-1 font-display">攻擊轉盤</div>
           <div className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl font-display border-2 border-primary ${phase === 'roulette' && rouletteValue === null ? 'roulette-spin border-accent' : ''}`}
             style={{ background: rouletteValue ? `linear-gradient(135deg, ${rouletteValue > 7 ? '#22C55E' : rouletteValue > 4 ? '#FBBF24' : '#EF4444'}44, transparent)` : '' }}>
             {rouletteDisplay}
@@ -267,14 +267,14 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
               onClick={stopRoulette}
               className="mt-2 px-4 py-1 bg-accent text-white rounded font-display text-sm hover:bg-accent-light transition-all"
             >
-              STOP!
+              停止！
             </button>
           )}
         </div>
 
         {/* Mash */}
         <div className="text-center">
-          <div className="text-xs text-text-muted mb-1 font-display">MASH!</div>
+          <div className="text-xs text-text-muted mb-1 font-display">連打！</div>
           <button
             onClick={handleMash}
             disabled={phase !== 'mash' || mashTimeLeft <= 0}
@@ -290,12 +290,12 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
               <span className="text-accent">{(mashTimeLeft / 1000).toFixed(1)}s</span>
             </div>
           )}
-          <div className="text-[10px] text-text-muted mt-1">Click or SPACE</div>
+          <div className="text-[10px] text-text-muted mt-1">點擊或按空白鍵</div>
         </div>
 
         {/* Damage */}
         <div className="text-center">
-          <div className="text-xs text-text-muted mb-1 font-display">DAMAGE</div>
+          <div className="text-xs text-text-muted mb-1 font-display">傷害</div>
           <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-display border-2 border-white/10 bg-white/5">
             {phase === 'damage-anim' || phase === 'turn-end' || phase === 'battle-end' ? (
               <span className="text-accent catch-success">{lastDamage}</span>
@@ -308,7 +308,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
       {/* Player Tags (Lanes) */}
       <div className="bg-bg-card rounded-xl p-4 border border-white/5">
-        <div className="text-xs text-text-muted mb-2 font-display">YOUR TEAM</div>
+        <div className="text-xs text-text-muted mb-2 font-display">你的隊伍</div>
         <div className="flex justify-center gap-4">
           {playerTags.map((tag, i) => (
             <div key={tag.id} className="text-center">
@@ -324,7 +324,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
                   onClick={() => selectAttacker(i)}
                   className="mt-2 px-3 py-1 text-xs bg-primary/20 text-primary-light rounded hover:bg-primary/40 font-display transition-all"
                 >
-                  ATTACK →
+                  攻擊 →
                 </button>
               )}
             </div>
@@ -339,7 +339,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
             onClick={nextTurn}
             className="px-6 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg transition-all"
           >
-            NEXT ROUND →
+            下一回合 →
           </button>
         </div>
       )}

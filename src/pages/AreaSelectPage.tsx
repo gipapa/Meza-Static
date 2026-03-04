@@ -29,8 +29,8 @@ export default function AreaSelectPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl text-center mb-2 neon-text">SELECT AREA</h1>
-      <p className="text-center text-text-muted mb-8">Choose a region to explore</p>
+      <h1 className="font-display text-3xl text-center mb-2 neon-text">選擇區域</h1>
+      <p className="text-center text-text-muted mb-8">選擇一個區域進行探索</p>
 
       {/* Area Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
@@ -51,10 +51,10 @@ export default function AreaSelectPage() {
               <p className="text-text-muted text-xs mb-2">{a.description}</p>
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-gold">★{a.minGrade}~★{a.maxGrade}</span>
-                {boss && <span className="text-accent">Boss: {boss.name}</span>}
+                {boss && <span className="text-accent">頭目: {boss.name}</span>}
               </div>
               {a.dropRates.superstar > 0 && (
-                <span className="text-[10px] superstar-shimmer font-bold">★6 CHANCE!</span>
+                <span className="text-[10px] superstar-shimmer font-bold">★６ 機會！</span>
               )}
             </button>
           );
@@ -65,12 +65,12 @@ export default function AreaSelectPage() {
       {area && (
         <div className="bg-bg-card rounded-xl p-6 neon-border">
           <h2 className="font-display text-lg mb-1">
-            Choose Your Team <span className="text-text-muted text-sm">({selectedTags.length}/3)</span>
+            選擇你的隊伍 <span className="text-text-muted text-sm">({selectedTags.length}/3)</span>
           </h2>
           <p className="text-text-muted text-xs mb-4">
             {collection.length === 0
-              ? 'No collection yet — using rental monsters!'
-              : `Select up to 3 from your ${collection.length} collected tags.`}
+              ? '還沒有收藏 — 使用出租怪獸！'
+              : `從你的 ${collection.length} 張卡牌中選擇最多 3 隻。`}
           </p>
           <div className="flex flex-wrap gap-3 mb-6">
             {availableTags.slice(0, 12).map(tag => (
@@ -88,7 +88,7 @@ export default function AreaSelectPage() {
             disabled={selectedTags.length === 0}
             className="px-6 py-2 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-display rounded-lg transition-all"
           >
-            ⚔️ ENTER BATTLE
+            ⚔️ 進入對戰
           </button>
         </div>
       )}

@@ -29,6 +29,15 @@ export const TYPE_EMOJI: Record<string, string> = {
   bug: '🐛', rock: '🪨',
 };
 
+/** 寶可夢官方中文屬性名稱 */
+export const TYPE_NAMES_ZH: Record<string, string> = {
+  fire: '火', water: '水', grass: '草', electric: '電',
+  psychic: '超能力', dark: '惡', dragon: '龍', fairy: '妖精',
+  fighting: '格鬥', normal: '一般', ice: '冰', ghost: '幽靈',
+  steel: '鋼', poison: '毒', ground: '地面', flying: '飛行',
+  bug: '蟲', rock: '岩石',
+};
+
 export const ALL_TAGS: Tag[] = [
   // Area 1: Ember Volcano - Fire themed
   { id: 'tag_001', name: 'Blazeclaw', grade: 3, types: ['fire'], pe: 110, stats: { hp: 100, atk: 85, def: 55, spd: 70 }, move: { name: 'Flame Slash', type: 'fire', power: 55 }, flags: {} },
@@ -66,69 +75,69 @@ export const RENTAL_TAGS: Tag[] = [
 export const AREAS: Area[] = [
   {
     areaId: 'area_volcano',
-    name: 'Ember Volcano',
+    name: '燼焰火山',
     emoji: '🌋',
     bossPool: ['tag_002'],
     minionPool: ['tag_001', 'tag_003'],
     minGrade: 2,
     maxGrade: 4,
     dropRates: { star: 0.04, superstar: 0 },
-    description: 'A blazing mountain of fire and fury.',
+    description: '烈焰燃燒的怒火之山。',
   },
   {
     areaId: 'area_coast',
-    name: 'Azure Coast',
+    name: '蒼藍海岸',
     emoji: '🌊',
     bossPool: ['tag_005'],
     minionPool: ['tag_004', 'tag_006'],
     minGrade: 2,
     maxGrade: 5,
     dropRates: { star: 0.06, superstar: 0 },
-    description: 'Deep waters hide ancient beasts.',
+    description: '深海之中潛藏著遠古巨獸。',
   },
   {
     areaId: 'area_forest',
-    name: 'Forest Shrine',
+    name: '森林神殿',
     emoji: '🌳',
     bossPool: ['tag_008'],
     minionPool: ['tag_007', 'tag_009'],
     minGrade: 2,
     maxGrade: 4,
     dropRates: { star: 0.04, superstar: 0 },
-    description: 'A mystical forest guarded by nature spirits.',
+    description: '由自然精靈守護的神秘森林。',
   },
   {
     areaId: 'area_thunder',
-    name: 'Thunder Peak',
+    name: '雷霆之巔',
     emoji: '⚡',
     bossPool: ['tag_010'],
     minionPool: ['tag_011', 'tag_012'],
     minGrade: 2,
     maxGrade: 4,
     dropRates: { star: 0.04, superstar: 0 },
-    description: 'Storm-lashed peaks crackle with energy.',
+    description: '風暴肆虐的山巔閃爍著電光。',
   },
   {
     areaId: 'area_phantom',
-    name: 'Phantom Castle',
+    name: '幽靈古堡',
     emoji: '👻',
     bossPool: ['tag_013'],
     minionPool: ['tag_014', 'tag_015'],
     minGrade: 3,
     maxGrade: 5,
     dropRates: { star: 0.06, superstar: 0 },
-    description: 'Spirits wander the haunted halls.',
+    description: '幽魂在鬧鬼的廳堂中遊蕩。',
   },
   {
     areaId: 'area_starfall',
-    name: 'Starfall Summit',
+    name: '星隕之頂',
     emoji: '🐉',
     bossPool: ['tag_016'],
     minionPool: ['tag_017', 'tag_018'],
     minGrade: 3,
     maxGrade: 6,
     dropRates: { star: 0.08, superstar: 0.02 },
-    description: 'The apex where legends descend from the cosmos.',
+    description: '傳說從宇宙降臨的最高峰。',
   },
 ];
 

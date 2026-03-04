@@ -35,7 +35,7 @@ export default function CatchPage() {
   const [bonusStopped, setBonusStopped] = useState(false);
   const [bonusCaught, setBonusCaught] = useState(false);
   const [caughtTags, setCaughtTags] = useState<Tag[]>([]);
-  const [message, setMessage] = useState('Choose a monster to catch!');
+  const [message, setMessage] = useState('選擇一隻怪獸來捕獲！');
   const ballSpinRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const bonusRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -66,7 +66,7 @@ export default function CatchPage() {
     if (phase !== 'last-select') return;
     setSelectedTarget(tag);
     setPhase('ball-spinning');
-    setMessage(`Targeting ${tag.name}! Tap STOP for the Ball Roulette!`);
+    setMessage(`目標鎖定 ${tag.name}！點擊「停止」來停下球種轉盤！`);
   };
 
   const stopBallRoulette = () => {
@@ -76,7 +76,7 @@ export default function CatchPage() {
     setBallDisplay(ball);
     if (ballSpinRef.current) clearInterval(ballSpinRef.current);
     setPhase('ball-roulette');
-    setMessage(`${BALL_NAMES[ball]}! Throwing...`);
+    setMessage(`${BALL_NAMES[ball]}！投擲中...`);
 
     setTimeout(() => {
       const success = attemptCatch(ball, catchGauge);
@@ -85,14 +85,14 @@ export default function CatchPage() {
         setCaughtTags(prev => [...prev, selectedTarget]);
       }
       setPhase('catch-result');
-      setMessage(success ? `🎉 Caught ${selectedTarget?.name}!` : `💨 ${selectedTarget?.name} escaped!`);
+      setMessage(success ? `🎉 捕獲到 ${selectedTarget?.name}！` : `💨 ${selectedTarget?.name} 逃跑了！`);
     }, 1500);
   };
 
   const goToBonus = () => {
     setPhase('bonus');
     setBonusStopped(false);
-    setMessage('Bonus Catch Time! Stop the cursor on the grass!');
+    setMessage('額外捕獲時間！在草叢上停下游標！');
   };
 
   const stopBonus = () => {
@@ -100,7 +100,7 @@ export default function CatchPage() {
     setBonusStopped(true);
     if (bonusRef.current) clearInterval(bonusRef.current);
     setPhase('bonus-stop');
-    setMessage(`Landed on ${bonusGrid[bonusCursor].name}! Throwing Poké Ball...`);
+    setMessage(`降落在 ${bonusGrid[bonusCursor].name}！投擲精靈球中...`);
 
     setTimeout(() => {
       const success = attemptCatch('poke', 50);
@@ -109,7 +109,7 @@ export default function CatchPage() {
         setCaughtTags(prev => [...prev, bonusGrid[bonusCursor]]);
       }
       setPhase('bonus-result');
-      setMessage(success ? `🎉 Bonus catch: ${bonusGrid[bonusCursor].name}!` : '💨 It escaped from the bonus!');
+      setMessage(success ? `🎉 額外捕獲: ${bonusGrid[bonusCursor].name}！` : '💨 從額外捕獲中逃跑了！');
     }, 1500);
   };
 
@@ -120,7 +120,7 @@ export default function CatchPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="font-display text-2xl text-center mb-2 neon-text">
-        {isCatchNow ? 'CATCH NOW' : 'CATCH TIME'}
+        {isCatchNow ? '快速捕獲' : '捕獲時間'}
       </h1>
 
       {/* Message */}
@@ -131,7 +131,7 @@ export default function CatchPage() {
       {/* Catch Gauge */}
       <div className="mb-6">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-text-muted">CATCH GAUGE</span>
+          <span className="text-text-muted">捕獲計量表</span>
           <span className="text-neon-cyan">{Math.round(catchGauge)}%</span>
         </div>
         <div className="h-2 bg-white/10 rounded-full overflow-hidden">
@@ -142,7 +142,7 @@ export default function CatchPage() {
       {/* Phase: Target Selection */}
       {phase === 'last-select' && (
         <div>
-          <p className="text-center text-text-muted text-sm mb-4">Choose one monster to catch:</p>
+          <p className="text-center text-text-muted text-sm mb-4">選擇一隻怪獸來捕獲：</p>
           <div className="flex justify-center gap-4">
             {enemies.slice(0, 3).map(tag => (
               <div key={tag.id} className="text-center">
@@ -151,7 +151,7 @@ export default function CatchPage() {
                   onClick={() => selectTarget(tag)}
                   className="mt-2 px-3 py-1 text-xs bg-neon-cyan/20 text-neon-cyan rounded hover:bg-neon-cyan/30 font-display"
                 >
-                  TARGET
+                  目標
                 </button>
               </div>
             ))}
@@ -162,7 +162,7 @@ export default function CatchPage() {
       {/* Phase: Ball Roulette */}
       {(phase === 'ball-spinning' || phase === 'ball-roulette') && (
         <div className="text-center">
-          <p className="text-text-muted text-sm mb-4">Ball Roulette</p>
+          <p className="text-text-muted text-sm mb-4">球種轉盤</p>
           <div className="flex justify-center gap-3 mb-4">
             {ballTypes.map(b => (
               <div
@@ -181,7 +181,7 @@ export default function CatchPage() {
               onClick={stopBallRoulette}
               className="px-6 py-2 bg-accent text-white font-display rounded-lg hover:bg-accent-light transition-all"
             >
-              STOP!
+              停止！
             </button>
           )}
           {phase === 'ball-roulette' && ballType && (
@@ -198,13 +198,13 @@ export default function CatchPage() {
           {caught ? (
             <div className="catch-success">
               <div className="text-6xl mb-4">🎉</div>
-              <div className="font-display text-2xl text-neon-green mb-2">CAUGHT!</div>
+              <div className="font-display text-2xl text-neon-green mb-2">捕獲成功！</div>
               {selectedTarget && <TagCard tag={selectedTarget} size="lg" className="mx-auto" />}
             </div>
           ) : (
             <div>
               <div className="text-6xl mb-4">💨</div>
-              <div className="font-display text-xl text-text-muted mb-2">It got away...</div>
+              <div className="font-display text-xl text-text-muted mb-2">它逃跑了...</div>
             </div>
           )}
           <div className="mt-6 flex justify-center gap-3">
@@ -212,13 +212,13 @@ export default function CatchPage() {
               onClick={goToBonus}
               className="px-4 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg text-sm"
             >
-              → BONUS CATCH
+              → 額外捕獲
             </button>
             <button
               onClick={goToResult}
               className="px-4 py-2 bg-bg-card border border-white/10 text-text-primary font-display rounded-lg text-sm hover:bg-bg-card-hover"
             >
-              → RESULTS
+              → 查看結果
             </button>
           </div>
         </div>
@@ -227,7 +227,7 @@ export default function CatchPage() {
       {/* Phase: Bonus Catch (Grass Grid) */}
       {(phase === 'bonus' || phase === 'bonus-stop') && (
         <div className="text-center">
-          <p className="text-text-muted text-sm mb-4">Stop the cursor on the grass!</p>
+          <p className="text-text-muted text-sm mb-4">在草叢上停下游標！</p>
           <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto mb-4">
             {bonusGrid.map((tag, i) => (
               <div
@@ -248,7 +248,7 @@ export default function CatchPage() {
               onClick={stopBonus}
               className="px-6 py-2 bg-neon-green/80 text-bg-dark font-display rounded-lg hover:bg-neon-green transition-all"
             >
-              STOP!
+              停止！
             </button>
           )}
         </div>
@@ -260,20 +260,20 @@ export default function CatchPage() {
           {bonusCaught ? (
             <div className="catch-success">
               <div className="text-4xl mb-2">🌿🎉</div>
-              <div className="font-display text-xl text-neon-green">BONUS CATCH!</div>
-              <p className="text-text-muted text-sm mt-1">{bonusGrid[bonusCursor].name} joined your collection!</p>
+              <div className="font-display text-xl text-neon-green">額外捕獲成功！</div>
+              <p className="text-text-muted text-sm mt-1">{bonusGrid[bonusCursor].name} 加入了你的收藏！</p>
             </div>
           ) : (
             <div>
               <div className="text-4xl mb-2">🌿💨</div>
-              <div className="font-display text-lg text-text-muted">Escaped from the grass...</div>
+              <div className="font-display text-lg text-text-muted">從草叢中逃跑了...</div>
             </div>
           )}
           <button
             onClick={goToResult}
             className="mt-6 px-6 py-2 bg-accent text-white font-display rounded-lg hover:bg-accent-light"
           >
-            → VIEW RESULTS
+            → 查看結果
           </button>
         </div>
       )}
