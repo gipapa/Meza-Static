@@ -1,54 +1,68 @@
-# React + TypeScript + Vite
+# MEZA★STATIC
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A fan-made arcade tag-battle web game inspired by Pokémon MEZASTAR. Battle bosses, spin roulettes, mash buttons, and collect monster tags — all in your browser!
 
-Currently, two official plugins are available:
+**Live Demo:** [https://gipapa.github.io/Meza-Static/](https://gipapa.github.io/Meza-Static/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Battle & Catch** — 3-round boss battles with attack roulette + mash mechanics
+- **Catch Now** — Quick encounter mode for instant tag collecting
+- **18 Original Monsters** across 6 themed areas (★2–★6 rarity)
+- **Battle Animations** — Per-type CSS particle effects (18 types mapped to 5 animation variants: rise, expand, bolt, slam, sweep) with card lunge/hit reactions
+- **Ball Roulette** — Poké / Great / Ultra / Master ball chance system
+- **Bonus Catch** — Grass-grid mini-game for extra catches
+- **Collection** — Card wall with grade/type filters, sorting, and card flip
+- **Trainer Profile** — Nickname, 40 emoji avatars, stats tracking
+- **Settings** — Export/import JSON, clear data
+- **Fully Static** — No backend, localStorage persistence, deployable anywhere
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech Stack
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+| Layer | Tech |
+|-------|------|
+| Framework | React 18 + TypeScript |
+| Build | Vite 6 |
+| Styling | Tailwind CSS v4 (`@tailwindcss/vite`) |
+| Routing | react-router-dom (HashRouter) |
+| Design | Retro-Futurism / Cyberpunk (Russo One + Chakra Petch) |
+| Deploy | GitHub Pages via Actions |
+
+## Getting Started
+
+```bash
+npm install
+npm run dev        # Dev server at localhost:5173
+npm run build      # Production build (tsc + vite)
+npm run preview    # Preview production build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Battle Animation System
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Attacks trigger type-specific CSS particle animations during the damage phase:
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+| Variant | Types | Style |
+|---------|-------|-------|
+| **rise** | fire, grass, poison, bug | Emoji particles scatter outward and fade |
+| **expand** | water, ice, psychic, fairy, ghost | Particles grow from center and dissolve |
+| **bolt** | electric | Zigzag horizontal flash |
+| **slam** | fighting, steel, ground, rock | Impact drop from above |
+| **sweep** | dragon, dark, normal, flying | Diagonal arc sweep |
+
+Each attack also features a colored ring burst matching the move's type color, an attacker card lunge animation, and a boss hit-shake with brightness flash.
+
+## Project Structure
+
 ```
+src/
+├── components/     # TagCard, Header, Footer, BattleAnimation
+├── data/           # Monster definitions, type maps
+├── lib/            # Battle mechanics, RNG, localStorage
+├── pages/          # 11 route pages (Home→Battle→Catch→Collection→...)
+├── types.ts        # TypeScript interfaces
+└── index.css       # Tailwind theme + battle animations
+```
+
+## Legal
+
+This is a **fan-made project** for educational & entertainment purposes only. Not affiliated with Nintendo, The Pokémon Company, or Takara Tomy Arts. All monster data and artwork are original creations.

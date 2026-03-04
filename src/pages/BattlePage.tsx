@@ -5,6 +5,7 @@ import { getTagById } from '../data/monsters';
 import { TYPE_COLORS, TYPE_EMOJI } from '../data/monsters';
 import { calcDamage, rollAttackRoulette, calcBossMaxHp } from '../lib/battle';
 import TagCard from '../components/TagCard';
+import BattleAnimation from '../components/BattleAnimation';
 
 type Phase = 'select-attacker' | 'roulette' | 'mash' | 'damage-anim' | 'turn-end' | 'battle-end';
 
@@ -40,6 +41,8 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const [lastDamage, setLastDamage] = useState(0);
   const [turns, setTurns] = useState<TurnRecord[]>([]);
   const [message, setMessage] = useState('Choose your attacker!');
+  const [showAnim, setShowAnim] = useState(false);
+  const [animKey, setAnimKey] = useState(0);
   const mashTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const rouletteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -72,6 +75,8 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       const attacker = playerTags[selectedLane];
       const dmg = calcDamage(attacker, rouletteValue, mashCount);
       setLastDamage(dmg);
+      setShowAnim(true);
+      setAnimKey(prev => prev + 1);
       setPhase('damage-anim');
       setMessage(`${attacker.name} deals ${dmg} damage!`);
 
@@ -188,7 +193,15 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       </div>
 
       {/* Enemy Section */}
-      <div className="bg-bg-card rounded-xl p-4 mb-4 border border-white/5">
+      <div className="bg-bg-card rounded-xl p-4 mb-4 border border-white/5 relative">
+        {/* Battle Animation Overlay */}
+        {showAnim && selectedLane !== null && (
+          <BattleAnimation
+            key={animKey}
+            type={playerTags[selectedLane].move.type}
+            onDone={() => setShowAnim(false)}
+          />
+        )}
         <div className="flex justify-center gap-4 items-end">
           {/* Left Minion */}
           <div className="text-center opacity-60">
@@ -196,7 +209,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
             <div className="text-xs text-text-muted">{minions[0]?.name}</div>
           </div>
           {/* Boss */}
-          <div className="text-center">
+          <div className={`text-center ${phase === 'damage-anim' ? 'anim-hit' : ''}`}>
             <div className="text-5xl mb-2" style={{ filter: `drop-shadow(0 0 12px ${TYPE_COLORS[boss.types[0]]})` }}>
               {TYPE_EMOJI[boss.types[0]] || '⚪'}
             </div>
@@ -304,7 +317,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
                 size="sm"
                 selected={selectedLane === i}
                 onClick={() => selectAttacker(i)}
-                className={phase === 'select-attacker' ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}
+                className={`${phase === 'select-attacker' ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'} ${phase === 'damage-anim' && selectedLane === i ? 'anim-lunge' : ''}`}
               />
               {phase === 'select-attacker' && (
                 <button
