@@ -219,6 +219,271 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(20deg); }
 }
 
+/* ===== Projectile Animations ===== */
+
+.projectile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Outer wrapper: carries the path (translate) animation */
+.projectile-body,
+.projectile-trail {
+  position: absolute;
+  will-change: transform, opacity;
+  animation-fill-mode: forwards;
+}
+
+.projectile-trail {
+  opacity: 0;           /* hidden during delay; keyframe sets opacity:1 at 0% */
+  filter: blur(3px);
+}
+
+/* Inner shape: centered at the wrapper origin */
+.proj-shape {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.proj-rotate {
+  transform: translate(-50%, -50%) rotate(var(--angle));
+}
+
+.proj-trail-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  filter: blur(4px);
+}
+
+/* ── Path keyframes ── */
+
+.proj-path-straight { animation-name: proj-fly-straight; animation-timing-function: ease-out; }
+.proj-path-arc      { animation-name: proj-fly-arc;      animation-timing-function: ease-in-out; }
+.proj-path-parabolic{ animation-name: proj-fly-parabolic; animation-timing-function: ease-in; }
+.proj-path-zigzag   { animation-name: proj-fly-zigzag;   animation-timing-function: linear; }
+.proj-path-curve-s  { animation-name: proj-fly-curve-s;  animation-timing-function: ease-in-out; }
+.proj-path-fade-in  { animation-name: proj-fly-fade-in;  animation-timing-function: ease-in; }
+.proj-path-wobble   { animation-name: proj-fly-wobble;   animation-timing-function: ease-in-out; }
+.proj-path-vibrate  { animation-name: proj-fly-vibrate;  animation-timing-function: linear; }
+.proj-path-scatter  { animation-name: proj-fly-scatter;   animation-timing-function: ease-out; }
+
+@keyframes proj-fly-straight {
+  0%   { transform: translate(0,0) scale(1); opacity:1; }
+  85%  { opacity:1; }
+  100% { transform: translate(var(--dx),var(--dy)) scale(1); opacity:0.6; }
+}
+
+@keyframes proj-fly-arc {
+  0%   { transform: translate(0,0); opacity:1; }
+  50%  { transform: translate(calc(var(--dx)*0.5), calc(var(--dy)*0.5 - 50px)); opacity:1; }
+  100% { transform: translate(var(--dx),var(--dy)); opacity:0.5; }
+}
+
+@keyframes proj-fly-parabolic {
+  0%   { transform: translate(0,0); opacity:1; }
+  30%  { transform: translate(calc(var(--dx)*0.3), calc(var(--dy)*0.3 - 70px)); }
+  100% { transform: translate(var(--dx),var(--dy)); opacity:0.7; }
+}
+
+@keyframes proj-fly-zigzag {
+  0%   { transform: translate(0,0); opacity:1; }
+  20%  { transform: translate(calc(var(--dx)*0.2 + 20px), calc(var(--dy)*0.2)); }
+  40%  { transform: translate(calc(var(--dx)*0.4 - 20px), calc(var(--dy)*0.4)); }
+  60%  { transform: translate(calc(var(--dx)*0.6 + 15px), calc(var(--dy)*0.6)); }
+  80%  { transform: translate(calc(var(--dx)*0.8 - 10px), calc(var(--dy)*0.8)); }
+  100% { transform: translate(var(--dx),var(--dy)); opacity:0.8; }
+}
+
+@keyframes proj-fly-curve-s {
+  0%   { transform: translate(0,0); opacity:0.8; }
+  25%  { transform: translate(calc(var(--dx)*0.25 + 35px), calc(var(--dy)*0.25)); opacity:0.3; }
+  50%  { transform: translate(calc(var(--dx)*0.5  - 35px), calc(var(--dy)*0.5));  opacity:0.9; }
+  75%  { transform: translate(calc(var(--dx)*0.75 + 20px), calc(var(--dy)*0.75)); opacity:0.3; }
+  100% { transform: translate(var(--dx),var(--dy)); opacity:0.8; }
+}
+
+@keyframes proj-fly-fade-in {
+  0%   { transform: translate(0,0); opacity:0; }
+  60%  { opacity:0.15; }
+  85%  { opacity:0.9; }
+  100% { transform: translate(var(--dx),var(--dy)); opacity:1; }
+}
+
+@keyframes proj-fly-wobble {
+  0%   { transform: translate(0,0) rotate(0deg); opacity:1; }
+  25%  { transform: translate(calc(var(--dx)*0.25), calc(var(--dy)*0.25)) rotate(5deg)  translateX(8px); }
+  50%  { transform: translate(calc(var(--dx)*0.5),  calc(var(--dy)*0.5))  rotate(-5deg) translateX(-8px); }
+  75%  { transform: translate(calc(var(--dx)*0.75), calc(var(--dy)*0.75)) rotate(3deg)  translateX(5px); }
+  100% { transform: translate(var(--dx),var(--dy)) rotate(0deg); opacity:0.6; }
+}
+
+@keyframes proj-fly-vibrate {
+  0%   { transform: translate(0,0); opacity:1; }
+  10%  { transform: translate(calc(var(--dx)*0.1 + 4px), calc(var(--dy)*0.1)); }
+  20%  { transform: translate(calc(var(--dx)*0.2 - 4px), calc(var(--dy)*0.2)); }
+  30%  { transform: translate(calc(var(--dx)*0.3 + 4px), calc(var(--dy)*0.3)); }
+  40%  { transform: translate(calc(var(--dx)*0.4 - 4px), calc(var(--dy)*0.4)); }
+  50%  { transform: translate(calc(var(--dx)*0.5 + 3px), calc(var(--dy)*0.5)); }
+  60%  { transform: translate(calc(var(--dx)*0.6 - 3px), calc(var(--dy)*0.6)); }
+  70%  { transform: translate(calc(var(--dx)*0.7 + 2px), calc(var(--dy)*0.7)); }
+  80%  { transform: translate(calc(var(--dx)*0.8 - 2px), calc(var(--dy)*0.8)); }
+  90%  { transform: translate(calc(var(--dx)*0.9 + 1px), calc(var(--dy)*0.9)); }
+  100% { transform: translate(var(--dx),var(--dy)); opacity:0.7; }
+}
+
+@keyframes proj-fly-scatter {
+  0%   { transform: translate(0,0) scale(0.6); opacity:1; }
+  50%  { transform: translate(calc(var(--dx)*0.5), calc(var(--dy)*0.5)) scale(1.2); }
+  100% { transform: translate(var(--dx),var(--dy)) scale(1); opacity:0.5; }
+}
+
+/* ── Per-type shape visuals ── */
+
+/* 🔥 fire — orange fireball with glow */
+.proj-fire {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle, #FFF8 0%, #F97316 40%, #DC2626 100%);
+  box-shadow: 0 0 16px #F97316, 0 0 32px #F9731666;
+}
+
+/* 💧 water — elongated blue stream */
+.proj-water {
+  width: 10px; height: 28px; border-radius: 40% 40% 50% 50%;
+  background: linear-gradient(180deg, #93C5FD, #3B82F6);
+  box-shadow: 0 0 14px #3B82F6, 0 0 28px #3B82F666;
+}
+
+/* 🌿 grass — spinning leaf (emoji content) */
+.proj-grass {
+  width: 28px; height: 28px; font-size: 1.2rem;
+}
+.proj-grass { animation: proj-spin 500ms linear infinite; }
+
+/* ⚡ electric — bolt emoji with yellow glow */
+.proj-electric {
+  width: 32px; height: 32px; font-size: 1.6rem;
+  filter: drop-shadow(0 0 8px #FBBF24) drop-shadow(0 0 16px #FBBF2488);
+}
+
+/* 🔮 psychic — pulsing pink-purple orb */
+.proj-psychic {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: radial-gradient(circle, #FFF8 0%, #EC4899 50%, #8B5CF6 100%);
+  box-shadow: 0 0 16px #EC4899, 0 0 32px #EC489966;
+  animation: proj-pulse 250ms ease-in-out infinite alternate;
+}
+
+/* 🌑 dark — shadow claw shape */
+.proj-dark {
+  width: 30px; height: 18px;
+  background: radial-gradient(ellipse, #374151 20%, #111827 80%);
+  box-shadow: 0 0 20px #111827, 0 0 40px #11182766;
+  clip-path: polygon(0% 20%, 60% 0%, 100% 30%, 80% 50%, 100% 70%, 60% 100%, 0% 80%, 20% 50%);
+}
+
+/* 🐉 dragon — swirling purple-blue energy */
+.proj-dragon {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: radial-gradient(circle, #C4B5FD 0%, #7C3AED 50%, #4C1D95 100%);
+  box-shadow: 0 0 16px #7C3AED, 0 0 32px #7C3AED66;
+  animation: proj-spin 350ms linear infinite;
+}
+
+/* ✨ fairy — sparkling star (emoji) */
+.proj-fairy {
+  width: 28px; height: 28px; font-size: 1.3rem;
+  filter: drop-shadow(0 0 8px #F9A8D4) drop-shadow(0 0 16px #F9A8D488);
+}
+
+/* 🥊 fighting — fist emoji, fast & direct */
+.proj-fighting {
+  width: 34px; height: 34px; font-size: 1.6rem;
+  filter: drop-shadow(0 0 6px #DC2626) drop-shadow(0 0 14px #DC262666);
+}
+
+/* ⚪ normal — simple white-gray energy ball */
+.proj-normal {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle, #FFF 0%, #D6D3D1 50%, #A8A29E 100%);
+  box-shadow: 0 0 10px #A8A29E, 0 0 20px #A8A29E66;
+}
+
+/* ❄️ ice — cyan crystal pentagon */
+.proj-ice {
+  width: 18px; height: 18px;
+  background: linear-gradient(135deg, #FFF 0%, #67E8F9 50%, #06B6D4 100%);
+  box-shadow: 0 0 14px #67E8F9, 0 0 28px #67E8F966;
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
+
+/* 👻 ghost — translucent purple orb that flickers */
+.proj-ghost {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: radial-gradient(circle, #C4B5FD44 0%, #8B5CF6 60%, #6D28D9 100%);
+  box-shadow: 0 0 18px #8B5CF6, 0 0 36px #8B5CF666;
+}
+
+/* ⚙️ steel — silver metallic spike */
+.proj-steel {
+  width: 8px; height: 24px;
+  background: linear-gradient(to right, #F1F5F9, #94A3B8, #64748B);
+  box-shadow: 0 0 8px #94A3B8, 0 0 16px #94A3B866;
+  border-radius: 2px;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+/* ☠️ poison — purple bubble (rendered ×3 via scatter) */
+.proj-poison {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: radial-gradient(circle, #D8B4FE 0%, #A855F7 50%, #7C3AED 100%);
+  box-shadow: 0 0 12px #A855F7, 0 0 24px #A855F766;
+  animation: proj-bubble 250ms ease-in-out infinite alternate;
+}
+
+/* 🏔️ ground — brown rock chunk */
+.proj-ground {
+  width: 16px; height: 16px; border-radius: 30%;
+  background: linear-gradient(135deg, #D97706, #92400E, #78350F);
+  box-shadow: 0 0 8px #D97706, 0 0 16px #D9770666;
+}
+
+/* 🕊️ flying — horizontal wind slash */
+.proj-flying {
+  width: 30px; height: 6px; border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #93C5FD, #DBEAFE, #93C5FD, transparent);
+  box-shadow: 0 0 10px #93C5FD;
+}
+
+/* 🐛 bug — green needle / stinger */
+.proj-bug {
+  width: 6px; height: 22px;
+  background: linear-gradient(to bottom, #BEF264, #84CC16, #65A30D);
+  border-radius: 2px 2px 50% 50%;
+  box-shadow: 0 0 10px #84CC16, 0 0 20px #84CC1666;
+}
+
+/* 🪨 rock — gray-brown irregular rock */
+.proj-rock {
+  width: 18px; height: 16px; border-radius: 30% 40% 50% 20%;
+  background: linear-gradient(135deg, #D4C5A9, #A16207, #78350F);
+  box-shadow: 0 0 8px #A16207;
+}
+
+/* ── Shape helper keyframes ── */
+@keyframes proj-spin   { from { rotate: 0deg; }   to { rotate: 360deg; } }
+@keyframes proj-pulse  { from { scale: 0.85; }    to { scale: 1.15; } }
+@keyframes proj-bubble { from { scale: 0.9; }     to { scale: 1.2; } }
+
+/* ===== End Projectile Animations ===== */
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--color-bg-dark); }
 ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }

@@ -6,6 +6,7 @@ import { TYPE_COLORS, TYPE_EMOJI } from '../data/monsters';
 import { calcDamage, rollAttackRoulette, calcBossMaxHp } from '../lib/battle';
 import TagCard from '../components/TagCard';
 import BattleAnimation from '../components/BattleAnimation';
+import BattleProjectile, { getProjectileDuration } from '../components/BattleProjectile';
 
 type Phase = 'select-attacker' | 'roulette' | 'mash' | 'damage-anim' | 'turn-end' | 'battle-end';
 
@@ -43,8 +44,14 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const [message, setMessage] = useState('選擇你的攻擊者！');
   const [showAnim, setShowAnim] = useState(false);
   const [animKey, setAnimKey] = useState(0);
+  const [showProjectile, setShowProjectile] = useState(false);
+  const [projectileFrom, setProjectileFrom] = useState<{x:number;y:number}|null>(null);
+  const [projectileTo, setProjectileTo] = useState<{x:number;y:number}|null>(null);
+  const [showHit, setShowHit] = useState(false);
   const mashTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const rouletteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bossRef = useRef<HTMLDivElement>(null);
+  const laneRefs = useRef<(HTMLDivElement|null)[]>([]);
 
   // Roulette spinning animation
   useEffect(() => {
@@ -75,11 +82,23 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       const attacker = playerTags[selectedLane];
       const dmg = calcDamage(attacker, rouletteValue, mashCount);
       setLastDamage(dmg);
-      setShowAnim(true);
+
+      // Calculate projectile start / end positions
+      const attackerEl = laneRefs.current[selectedLane];
+      const bossEl = bossRef.current;
+      if (attackerEl && bossEl) {
+        const aRect = attackerEl.getBoundingClientRect();
+        const bRect = bossEl.getBoundingClientRect();
+        setProjectileFrom({ x: aRect.left + aRect.width / 2, y: aRect.top });
+        setProjectileTo({ x: bRect.left + bRect.width / 2, y: bRect.top + bRect.height / 2 });
+      }
+
+      setShowProjectile(true);
       setAnimKey(prev => prev + 1);
       setPhase('damage-anim');
       setMessage(`${attacker.name} 造成了 ${dmg} 點傷害！`);
 
+      const projDur = getProjectileDuration(attacker.move.type);
       setTimeout(() => {
         const newHp = Math.max(0, bossHp - dmg);
         setBossHp(newHp);
@@ -103,7 +122,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
           setPhase('turn-end');
           setMessage('回合結束！');
         }
-      }, 1000);
+      }, projDur + 1000);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, mashTimeLeft]);
@@ -154,11 +173,18 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setMashCount(prev => prev + 1);
   }, [phase, mashTimeLeft]);
 
+  const handleProjectileDone = useCallback(() => {
+    setShowProjectile(false);
+    setShowAnim(true);
+    setShowHit(true);
+  }, []);
+
   const nextTurn = () => {
     setTurn(prev => prev + 1);
     setSelectedLane(null);
     setRouletteValue(null);
     setMashCount(0);
+    setShowHit(false);
     setPhase('select-attacker');
     setMessage('選擇你的攻擊者！');
   };
@@ -209,7 +235,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
             <div className="text-xs text-text-muted">{minions[0]?.name}</div>
           </div>
           {/* Boss */}
-          <div className={`text-center ${phase === 'damage-anim' ? 'anim-hit' : ''}`}>
+          <div ref={bossRef} className={`text-center ${showHit ? 'anim-hit' : ''}`}>
             <div className="text-5xl mb-2" style={{ filter: `drop-shadow(0 0 12px ${TYPE_COLORS[boss.types[0]]})` }}>
               {TYPE_EMOJI[boss.types[0]] || '⚪'}
             </div>
@@ -311,7 +337,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         <div className="text-xs text-text-muted mb-2 font-display">你的隊伍</div>
         <div className="flex justify-center gap-4">
           {playerTags.map((tag, i) => (
-            <div key={tag.id} className="text-center">
+            <div key={tag.id} className="text-center" ref={el => { laneRefs.current[i] = el; }}>
               <TagCard
                 tag={tag}
                 size="sm"
@@ -331,6 +357,17 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
           ))}
         </div>
       </div>
+
+      {/* Projectile overlay (position:fixed — lives outside layout flow) */}
+      {showProjectile && selectedLane !== null && projectileFrom && projectileTo && (
+        <BattleProjectile
+          key={`proj-${animKey}`}
+          type={playerTags[selectedLane].move.type}
+          from={projectileFrom}
+          to={projectileTo}
+          onDone={handleProjectileDone}
+        />
+      )}
 
       {/* Next Turn Button */}
       {phase === 'turn-end' && (
