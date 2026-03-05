@@ -9,6 +9,7 @@ import BattleAnimation from '../components/BattleAnimation';
 import BattleProjectile, { getProjectileDuration } from '../components/BattleProjectile';
 import TypeChartTable from '../components/TypeChartTable';
 import { playBGM, stopBGM } from '../lib/bgm';
+import { useNameReveal } from '../lib/nameMask';
 
 /* ── Types ── */
 
@@ -50,6 +51,7 @@ export default function BattlePage() {
 
 function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const navigate = useNavigate();
+  const { dn } = useNameReveal();
 
   /* Start battle BGM */
   useEffect(() => {
@@ -136,7 +138,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     const idx = nextAliveEnemyIdx();
     setEnemyIdx(idx);
     const e = enemies[idx];
-    setMessage(`對手派出了 ${e.tag.name}！`);
+    setMessage(`對手派出了 ${dn(e.tag.name)}！`);
     setSubMessage('選擇你的應戰怪獸！');
     const t = setTimeout(() => setPhase('select-attacker'), 1200);
     return () => clearTimeout(t);
@@ -154,13 +156,13 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     const eSpd = enemy.tag.stats.spd;
     const first = aSpd >= eSpd;
     setPlayerFirst(first);
-    setMessage(`⚡ 速度比較 — ${ally.tag.name} SPD ${aSpd}  vs  ${enemy.tag.name} SPD ${eSpd}`);
-    setSubMessage(first ? `${ally.tag.name} 先攻！` : `${enemy.tag.name} 先攻！`);
+    setMessage(`⚡ 速度比較 — ${dn(ally.tag.name)} SPD ${aSpd}  vs  ${dn(enemy.tag.name)} SPD ${eSpd}`);
+    setSubMessage(first ? `${dn(ally.tag.name)} 先攻！` : `${dn(enemy.tag.name)} 先攻！`);
 
     const t = setTimeout(() => {
       if (first) {
         setPhase('roulette');
-        setMessage(`${ally.tag.name} 先攻！點擊「停止」來停下轉盤！`);
+        setMessage(`${dn(ally.tag.name)} 先攻！點擊「停止」來停下轉盤！`);
         setSubMessage('');
       } else {
         doEnemyAttack();
@@ -293,7 +295,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setShowProjectile(true);
     setAnimKey(prev => prev + 1);
     setPhase('player-attack-anim');
-    setMessage(`${ally.tag.name} 使用了 ${ally.tag.move.name}！`);
+    setMessage(`${dn(ally.tag.name)} 使用了 ${ally.tag.move.name}！`);
     setSubMessage('');
 
     const projDur = getProjectileDuration(ally.tag.move.type);
@@ -343,7 +345,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setShowProjectile(true);
     setAnimKey(prev => prev + 1);
     setPhase('enemy-attack-anim');
-    setMessage(`${enemy.tag.name} 使用了 ${enemy.tag.move.name}！`);
+    setMessage(`${dn(enemy.tag.name)} 使用了 ${enemy.tag.move.name}！`);
     setSubMessage('');
 
     const projDur = getProjectileDuration(enemy.tag.move.type);
@@ -372,9 +374,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   /* ── Mon fainted ── */
   const handleMonFainted = (who: 'ally' | 'enemy', _newHp?: number) => {
     if (who === 'enemy') {
-      setMessage(`${enemies[enemyIdx].tag.name} 被擊敗了！`);
+      setMessage(`${dn(enemies[enemyIdx].tag.name)} 被擊敗了！`);
     } else if (allyIdx !== null) {
-      setMessage(`${allies[allyIdx].tag.name} 倒下了！`);
+      setMessage(`${dn(allies[allyIdx].tag.name)} 倒下了！`);
     }
     setSubMessage('');
 
@@ -500,7 +502,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
           {enemies.map((e, i) => (
             <div key={e.tag.id} className={`text-center transition-all ${e.fainted ? 'opacity-20 grayscale' : ''} ${i === enemyIdx ? 'scale-110' : 'scale-90 opacity-60'}`}>
               <div className="text-2xl">{monEmoji(e.tag)}</div>
-              <div className="text-[10px] text-text-muted">{e.tag.name}</div>
+              <div className="text-[10px] text-text-muted">{dn(e.tag.name)}</div>
               {e.fainted && <div className="text-[10px] text-accent">✕</div>}
             </div>
           ))}
@@ -514,7 +516,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
             )}
             <div ref={enemyRef} className={`text-center ${showHitEnemy ? 'anim-hit' : ''}`}>
               <div className="text-5xl mb-2" style={{ filter: monGlow(activeEnemy.tag) }}>{monEmoji(activeEnemy.tag)}</div>
-              <div className="font-display text-lg">{activeEnemy.tag.name}</div>
+              <div className="font-display text-lg">{dn(activeEnemy.tag.name)}</div>
               <div className="flex justify-center gap-1 my-1">
                 {activeEnemy.tag.types.map(t => (
                   <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: `${TYPE_COLORS[t]}33`, color: TYPE_COLORS[t] }}>{TYPE_NAMES_ZH[t]}</span>
@@ -584,7 +586,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
             )}
             <div ref={allyRef} className={`text-center ${showHitAlly ? 'anim-hit' : ''}`}>
               <div className="text-4xl mb-1" style={{ filter: monGlow(activeAlly.tag) }}>{monEmoji(activeAlly.tag)}</div>
-              <div className="font-display text-sm">{activeAlly.tag.name}</div>
+              <div className="font-display text-sm">{dn(activeAlly.tag.name)}</div>
               <div className="text-xs text-text-muted mb-1">SPD {activeAlly.tag.stats.spd}</div>
               {hpBar(activeAlly, 'w-40')}
             </div>

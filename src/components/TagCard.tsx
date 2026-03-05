@@ -1,5 +1,6 @@
 import type { Tag } from '../types';
 import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { useNameReveal } from '../lib/nameMask';
 
 interface Props {
   tag: Tag;
@@ -21,6 +22,7 @@ function gradeClass(grade: number) {
 }
 
 export default function TagCard({ tag, onClick, size = 'md', showBack = false, selected = false, className = '' }: Props) {
+  const { dn } = useNameReveal();
   const primaryType = tag.types[0];
   const typeColor = TYPE_COLORS[primaryType] || '#A78BFA';
 
@@ -59,7 +61,7 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
           </div>
           {/* Name & Type */}
           <div className="mt-auto">
-            <div className="font-display text-xs truncate">{tag.name}</div>
+            <div className="font-display text-xs truncate">{dn(tag.name)}</div>
             <div className="flex items-center gap-1 mt-0.5">
               {tag.types.map(t => (
                 <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
@@ -81,7 +83,7 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
       ) : (
         /* Back */
         <div className="flex flex-col h-full p-2 text-[10px]">
-          <div className="font-display text-xs mb-1">{tag.name}</div>
+          <div className="font-display text-xs mb-1">{dn(tag.name)}</div>
           <div className="space-y-0.5">
             <StatBar label="HP" value={tag.stats.hp} max={300} color="#22C55E" />
             <StatBar label="ATK" value={tag.stats.atk} max={200} color="#EF4444" />

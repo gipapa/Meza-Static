@@ -5,11 +5,13 @@ import { shuffle } from '../lib/rng';
 import { rollBallRoulette, attemptCatch, BALL_NAMES, BALL_COLORS } from '../lib/battle';
 import type { Tag, BallType } from '../types';
 import TagCard from '../components/TagCard';
+import { useNameReveal } from '../lib/nameMask';
 
 type Phase = 'encounter' | 'ball-spin' | 'result';
 
 export default function CatchNowPage() {
   const navigate = useNavigate();
+  const { dn } = useNameReveal();
   const [pool] = useState(() => shuffle(ALL_TAGS.filter(t => t.grade <= 4)).slice(0, 3));
   const [selected, setSelected] = useState<Tag | null>(null);
   const [phase, setPhase] = useState<Phase>('encounter');
@@ -82,7 +84,7 @@ export default function CatchNowPage() {
       {phase === 'ball-spin' && selected && (
         <div>
           <div className="mb-4">
-            <p className="text-sm text-text-muted mb-2">野生的 <span className="text-neon-cyan">{selected.name}</span> 出現了！</p>
+            <p className="text-sm text-text-muted mb-2">野生的 <span className="text-neon-cyan">{dn(selected.name)}</span> 出現了！</p>
             <div className="text-5xl mb-2" style={{ filter: `drop-shadow(0 0 12px ${TYPE_COLORS[selected.types[0]]})` }}>
               {TYPE_EMOJI[selected.types[0]]}
             </div>
@@ -127,7 +129,7 @@ export default function CatchNowPage() {
           ) : (
             <div>
               <div className="text-6xl mb-4">💨</div>
-              <div className="font-display text-xl text-text-muted mb-4">{selected?.name} 逃跑了...</div>
+              <div className="font-display text-xl text-text-muted mb-4">{dn(selected?.name ?? '')} 逃跑了...</div>
             </div>
           )}
           <button

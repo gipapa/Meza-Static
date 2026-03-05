@@ -1,4 +1,8 @@
+import { useNameReveal } from '../lib/nameMask';
+
 export default function HowToPage() {
+  const { revealed, reveal } = useNameReveal();
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="font-display text-3xl text-center mb-8 neon-text">遊戲說明</h1>
@@ -63,6 +67,24 @@ export default function HowToPage() {
             <li>• 你的收藏存儲在瀏覽器本地儲存中 — 不需要帳號</li>
             <li>• 從設定中匯出你的收藏以保留備份</li>
           </ul>
+        </div>
+
+        <div className="bg-bg-card rounded-xl p-6 border border-accent/20 mt-8 text-center">
+          <h3 className="font-display text-lg mb-3 text-accent">🔓 名稱顯示</h3>
+          <p className="text-sm text-text-muted mb-4">
+            為避免版權爭議，怪獸名稱預設以加密形式顯示。<br />
+            按下按鈕即可查看正確名稱。
+          </p>
+          {revealed ? (
+            <div className="text-neon-green font-display text-lg">✅ 已解鎖正確名稱</div>
+          ) : (
+            <button
+              onClick={reveal}
+              className="px-6 py-2 bg-accent hover:bg-accent-light text-white font-display rounded-lg transition-all text-lg"
+            >
+              顯示正確名字
+            </button>
+          )}
         </div>
       </div>
     </div>

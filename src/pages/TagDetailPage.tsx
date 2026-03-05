@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import type { Tag } from '../types';
 import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { useNameReveal } from '../lib/nameMask';
 
 export default function TagDetailPage() {
   const location = useLocation();
   const tag = (location.state as { tag: Tag })?.tag;
   const [flipped, setFlipped] = useState(false);
+  const { dn } = useNameReveal();
 
   if (!tag) {
     return (
@@ -50,7 +52,7 @@ export default function TagDetailPage() {
                   {TYPE_EMOJI[primaryType] || '⚪'}
                 </div>
               </div>
-              <h2 className="font-display text-2xl">{tag.name}</h2>
+              <h2 className="font-display text-2xl">{dn(tag.name)}</h2>
               <div className="flex justify-center gap-2 mt-2">
                 {tag.types.map(t => (
                   <span key={t} className="px-2 py-0.5 rounded-full text-xs font-bold"
@@ -73,7 +75,7 @@ export default function TagDetailPage() {
                 border: `2px solid ${typeColor}44`,
               }}
             >
-              <h3 className="font-display text-lg mb-4">{tag.name} — 能力值</h3>
+              <h3 className="font-display text-lg mb-4">{dn(tag.name)} — 能力值</h3>
               <div className="space-y-3 flex-1">
                 <StatBarLarge label="HP" value={tag.stats.hp} max={300} color="#22C55E" />
                 <StatBarLarge label="ATK" value={tag.stats.atk} max={200} color="#EF4444" />

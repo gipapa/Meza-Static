@@ -5,6 +5,7 @@ import { rollBallRoulette, attemptCatch, BALL_NAMES, BALL_COLORS } from '../lib/
 import { ALL_TAGS, TYPE_EMOJI } from '../data/monsters';
 import { pick, shuffle } from '../lib/rng';
 import TagCard from '../components/TagCard';
+import { useNameReveal } from '../lib/nameMask';
 
 type Phase = 'last-select' | 'ball-roulette' | 'ball-spinning' | 'catch-result' | 'bonus' | 'bonus-stop' | 'bonus-result' | 'done';
 
@@ -24,6 +25,7 @@ export default function CatchPage() {
 
   const catchGauge = state?.catchGauge ?? 50;
   const enemies = state?.enemies ?? shuffle(ALL_TAGS).slice(0, 3);
+  const { dn } = useNameReveal();
 
   const [phase, setPhase] = useState<Phase>('last-select');
   const [selectedTarget, setSelectedTarget] = useState<Tag | null>(null);
@@ -66,7 +68,7 @@ export default function CatchPage() {
     if (phase !== 'last-select') return;
     setSelectedTarget(tag);
     setPhase('ball-spinning');
-    setMessage(`目標鎖定 ${tag.name}！點擊「停止」來停下球種轉盤！`);
+    setMessage(`目標鎖定 ${dn(tag.name)}！點擊「停止」來停下球種轉盤！`);
   };
 
   const stopBallRoulette = () => {
@@ -85,7 +87,7 @@ export default function CatchPage() {
         setCaughtTags(prev => [...prev, selectedTarget]);
       }
       setPhase('catch-result');
-      setMessage(success ? `🎉 捕獲到 ${selectedTarget?.name}！` : `💨 ${selectedTarget?.name} 逃跑了！`);
+      setMessage(success ? `🎉 捕獲到 ${dn(selectedTarget?.name ?? '')}！` : `💨 ${dn(selectedTarget?.name ?? '')} 逃跑了！`);
     }, 1500);
   };
 
@@ -100,7 +102,7 @@ export default function CatchPage() {
     setBonusStopped(true);
     if (bonusRef.current) clearInterval(bonusRef.current);
     setPhase('bonus-stop');
-    setMessage(`降落在 ${bonusGrid[bonusCursor].name}！投擲精靈球中...`);
+    setMessage(`降落在 ${dn(bonusGrid[bonusCursor].name)}！投擲精靈球中...`);
 
     setTimeout(() => {
       const success = attemptCatch('poke', 50);
@@ -109,7 +111,7 @@ export default function CatchPage() {
         setCaughtTags(prev => [...prev, bonusGrid[bonusCursor]]);
       }
       setPhase('bonus-result');
-      setMessage(success ? `🎉 額外捕獲: ${bonusGrid[bonusCursor].name}！` : '💨 從額外捕獲中逃跑了！');
+      setMessage(success ? `🎉 額外捕獲: ${dn(bonusGrid[bonusCursor].name)}！` : '💨 從額外捕獲中逃跑了！');
     }, 1500);
   };
 
@@ -239,7 +241,7 @@ export default function CatchPage() {
                 } ${bonusStopped && i === bonusCursor ? 'ring-2 ring-neon-green' : ''}`}
               >
                 <span className="text-lg">{TYPE_EMOJI[tag.types[0]]}</span>
-                <span className="text-[9px] text-text-muted truncate w-full px-1">{tag.name}</span>
+                <span className="text-[9px] text-text-muted truncate w-full px-1">{dn(tag.name)}</span>
               </div>
             ))}
           </div>
@@ -261,7 +263,7 @@ export default function CatchPage() {
             <div className="catch-success">
               <div className="text-4xl mb-2">🌿🎉</div>
               <div className="font-display text-xl text-neon-green">額外捕獲成功！</div>
-              <p className="text-text-muted text-sm mt-1">{bonusGrid[bonusCursor].name} 加入了你的收藏！</p>
+              <p className="text-text-muted text-sm mt-1">{dn(bonusGrid[bonusCursor].name)} 加入了你的收藏！</p>
             </div>
           ) : (
             <div>

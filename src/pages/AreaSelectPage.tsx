@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { AREAS, getTagById, RENTAL_TAGS } from '../data/monsters';
 import { getCollection, getBattleReadyIds } from '../lib/storage';
 import TagCard from '../components/TagCard';
+import { useNameReveal } from '../lib/nameMask';
 
 export default function AreaSelectPage() {
   const navigate = useNavigate();
+  const { dn } = useNameReveal();
   const collection = getCollection();
   const battleReadyIds = getBattleReadyIds();
 
@@ -59,7 +61,7 @@ export default function AreaSelectPage() {
               <p className="text-text-muted text-xs mb-2">{a.description}</p>
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-gold">★{a.minGrade}~★{a.maxGrade}</span>
-                {boss && <span className="text-accent">頭目: {boss.name}</span>}
+                {boss && <span className="text-accent">頭目: {dn(boss.name)}</span>}
               </div>
               {a.dropRates.superstar > 0 && (
                 <span className="text-[10px] superstar-shimmer font-bold">★６ 機會！</span>
