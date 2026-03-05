@@ -1,17 +1,37 @@
 import type { Tag, BallType } from '../types';
 import { randInt, rand } from './rng';
+import { getTypeMultiplier } from './typeChart';
 
 /**
- * Calculate damage for a battle turn.
- * D = base * (1 + R/10) * (1 + clamp(M, 0, 60) / 200)
+ * Calculate damage for a player battle turn.
+ * D = base * (1 + R/10) * (1 + clamp(M, 0, 60) / 200) * typeMult
  * base = atk + move.power + pe/10
  */
-export function calcDamage(attacker: Tag, roulette: number, mashCount: number): number {
+export function calcDamage(
+  attacker: Tag,
+  roulette: number,
+  mashCount: number,
+  defender?: Tag,
+): number {
   const base = attacker.stats.atk + attacker.move.power + attacker.pe / 10;
   const rMult = 1 + roulette / 10;
   const mClamped = Math.min(Math.max(mashCount, 0), 60);
   const mMult = 1 + mClamped / 200;
-  return Math.round(base * rMult * mMult);
+  const typeMult = defender ? getTypeMultiplier(attacker.types, defender.types) : 1;
+  return Math.round(base * rMult * mMult * typeMult);
+}
+
+/**
+ * Calculate damage for an enemy (AI) attack.
+ * Simpler formula — no roulette / mash.
+ * D = (atk + move.power) * randomFactor * typeMult * defReduction
+ */
+export function calcEnemyDamage(attacker: Tag, defender: Tag): number {
+  const base = attacker.stats.atk + attacker.move.power;
+  const randomFactor = 0.85 + rand() * 0.30;        // 0.85 – 1.15
+  const typeMult = getTypeMultiplier(attacker.types, defender.types);
+  const defReduction = 1 / (1 + defender.stats.def / 200); // soft scale defence
+  return Math.max(1, Math.round(base * randomFactor * typeMult * defReduction));
 }
 
 /**
