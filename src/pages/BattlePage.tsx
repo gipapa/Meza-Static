@@ -8,6 +8,7 @@ import TagCard from '../components/TagCard';
 import BattleAnimation from '../components/BattleAnimation';
 import BattleProjectile, { getProjectileDuration } from '../components/BattleProjectile';
 import TypeChartTable from '../components/TypeChartTable';
+import { playBGM, stopBGM } from '../lib/bgm';
 
 /* ── Types ── */
 
@@ -50,6 +51,12 @@ export default function BattlePage() {
 function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const navigate = useNavigate();
 
+  /* Start battle BGM */
+  useEffect(() => {
+    playBGM('battle');
+    return () => stopBGM();
+  }, []);
+
   /* Build enemy team (boss + 2 minions) */
   const enemyTagsRaw = [
     getTagById(area.bossPool[0])!,
@@ -65,7 +72,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   );
 
   const [round, setRound] = useState(1);
-  const maxRounds = 3;
   const [phase, setPhase] = useState<Phase>('enemy-send');
   const [message, setMessage] = useState('');
   const [subMessage, setSubMessage] = useState('');
@@ -100,8 +106,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   /* Speed */
   const [playerFirst, setPlayerFirst] = useState(true);
 
-  /* Catch gauge & effectiveness */
-  const [catchGauge, setCatchGauge] = useState(0);
+  /* Effectiveness */
   const [effectLabel, setEffectLabel] = useState<string | null>(null);
   const [effectColor, setEffectColor] = useState('#E2E8F0');
 
@@ -215,13 +220,15 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
    * ================================================================ */
   useEffect(() => {
     if (phase !== 'battle-end') return;
+    const won = enemies.every(e => e.fainted);
+    playBGM(won ? 'victory' : 'defeat');
     const t = setTimeout(() => {
       navigate('/play/catch', {
         state: {
           area,
           playerTags,
           enemies: enemyTagsRaw,
-          catchGauge: Math.min(100, catchGauge),
+          catchGauge: 50,
           bossDefeated: enemies.every(e => e.fainted),
           turns: [],
         },
@@ -298,8 +305,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         n[enemyIdx] = { ...n[enemyIdx], hp: newHp, fainted: newHp <= 0 };
         return n;
       });
-      setCatchGauge(prev => Math.min(100, prev + (dmg / enemy.maxHp) * 30));
-
       setTimeout(() => {
         if (newHp <= 0) {
           handleMonFainted('enemy', newHp);
@@ -392,8 +397,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         setPhase('battle-end');
       } else if (aAlive === 0) {
         setMessage('💀 你的隊伍全滅了...');
-        setSubMessage('前往捕獲階段...');
-        setCatchGauge(prev => Math.max(0, prev - 30));
+        setSubMessage('');
         setPhase('battle-end');
       } else {
         afterBothAttacked();
@@ -408,13 +412,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   };
 
   const nextRound = () => {
-    if (round >= maxRounds || aliveEnemies.length === 0 || aliveAllies.length === 0) {
-      const won = aliveEnemies.length === 0;
-      setMessage(won ? '🎉 你贏了！' : (aliveAllies.length === 0 ? '💀 你的隊伍全滅了...' : '3 回合結束！'));
-      setSubMessage('前往捕獲階段...');
-      setPhase('battle-end');
-      return;
-    }
+    /* Battle continues until one side is fully wiped — no forced round cap */
     setRound(prev => prev + 1);
     setAllyIdx(null);
     setRouletteValue(null);
@@ -477,7 +475,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         <div className="font-display text-sm">
           <span className="text-text-muted">回合</span>{' '}
           <span className="text-accent text-xl">{round}</span>
-          <span className="text-text-muted">/{maxRounds}</span>
         </div>
         <button
           onClick={() => setShowTypeChart(c => !c)}
@@ -573,16 +570,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         <div className="text-center mb-4"><span className="text-accent font-display text-lg catch-success">-{lastEnemyDmg} HP</span></div>
       )}
 
-      {/* Catch Gauge */}
-      <div className="mb-3">
-        <div className="flex justify-between text-xs mb-0.5">
-          <span className="text-text-muted">捕獲計量表</span>
-          <span className="text-neon-cyan">{Math.round(catchGauge)}%</span>
-        </div>
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500 bg-neon-cyan" style={{ width: `${Math.min(100, catchGauge)}%` }} />
-        </div>
-      </div>
+
 
       {/* ── Ally Side ── */}
       <div className="bg-bg-card rounded-xl p-4 border border-white/5 relative">
@@ -639,7 +627,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       {phase === 'round-result' && (
         <div className="text-center mt-4">
           <button onClick={nextRound} className="px-6 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg transition-all">
-            {round >= maxRounds ? '前往捕獲 →' : '下一回合 →'}
+            下一回合 →
           </button>
         </div>
       )}

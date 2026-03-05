@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getCollection } from '../lib/storage';
+import { getCollection, getBattleReadyIds, toggleBattleReady } from '../lib/storage';
 import { TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
 import TagCard from '../components/TagCard';
 
@@ -13,18 +13,28 @@ export default function CollectionPage() {
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('newest');
   const [showBack, setShowBack] = useState(false);
+  const [battleReadyOnly, setBattleReadyOnly] = useState(false);
+  const [readyIds, setReadyIds] = useState(() => getBattleReadyIds());
+
+  const handleToggleReady = (tagId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleBattleReady(tagId);
+    setReadyIds(getBattleReadyIds());
+  };
 
   const filtered = useMemo(() => {
     let items = [...collection];
     if (gradeFilter !== null) items = items.filter(t => t.grade === gradeFilter);
     if (typeFilter !== null) items = items.filter(t => t.types.includes(typeFilter));
+    if (battleReadyOnly) items = items.filter(t => readyIds.has(t.id));
     switch (sort) {
       case 'grade-desc': items.sort((a, b) => b.grade - a.grade); break;
       case 'pe-desc': items.sort((a, b) => b.pe - a.pe); break;
       default: items.reverse(); break; // newest first
     }
     return items;
-  }, [collection, gradeFilter, typeFilter, sort]);
+  }, [collection, gradeFilter, typeFilter, sort, battleReadyOnly, readyIds]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -83,7 +93,7 @@ export default function CollectionPage() {
 
           {/* Sort & View toggles */}
           <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {([['newest', '最新'], ['grade-desc', '★ 高→低'], ['pe-desc', 'PE 高→低']] as const).map(([key, label]) => (
                 <button
                   key={key}
@@ -91,6 +101,10 @@ export default function CollectionPage() {
                   className={`px-2 py-0.5 text-xs rounded ${sort === key ? 'bg-primary/30 text-primary-light' : 'bg-bg-card text-text-muted'}`}
                 >{label}</button>
               ))}
+              <button
+                onClick={() => setBattleReadyOnly(v => !v)}
+                className={`px-2 py-0.5 text-xs rounded ${battleReadyOnly ? 'bg-accent text-white' : 'bg-bg-card text-text-muted'}`}
+              >⚔️ 出戰</button>
             </div>
             <button
               onClick={() => setShowBack(!showBack)}
@@ -103,9 +117,22 @@ export default function CollectionPage() {
           {/* Grid */}
           <div className="flex flex-wrap gap-3 justify-center">
             {filtered.map((tag, i) => (
-              <Link key={`${tag.id}-${i}`} to={`/collection/${tag.id}`} state={{ tag }}>
-                <TagCard tag={tag} size="md" showBack={showBack} />
-              </Link>
+              <div key={`${tag.id}-${i}`} className="relative">
+                <Link to={`/collection/${tag.id}`} state={{ tag }}>
+                  <TagCard tag={tag} size="md" showBack={showBack} />
+                </Link>
+                <button
+                  onClick={(e) => handleToggleReady(tag.id, e)}
+                  className={`absolute top-1 right-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-all z-10 ${
+                    readyIds.has(tag.id)
+                      ? 'bg-accent text-white shadow-lg shadow-accent/30'
+                      : 'bg-black/50 text-text-muted hover:bg-black/70'
+                  }`}
+                  title={readyIds.has(tag.id) ? '取消出戰' : '設為出戰'}
+                >
+                  ⚔️
+                </button>
+              </div>
             ))}
           </div>
 

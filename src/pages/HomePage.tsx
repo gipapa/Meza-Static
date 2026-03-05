@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { playBGM } from '../lib/bgm';
 
 export default function HomePage() {
+  useEffect(() => { playBGM('menu'); }, []);
+
   return (
     <div className="scanlines">
       {/* Hero */}

@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AREAS, getTagById, RENTAL_TAGS } from '../data/monsters';
-import { getCollection } from '../lib/storage';
+import { getCollection, getBattleReadyIds } from '../lib/storage';
 import TagCard from '../components/TagCard';
 
 export default function AreaSelectPage() {
   const navigate = useNavigate();
   const collection = getCollection();
-  const availableTags = collection.length > 0 ? collection : RENTAL_TAGS;
+  const battleReadyIds = getBattleReadyIds();
+
+  // Show battle-ready monsters first; if none tagged, show all
+  const battleReadyTags = collection.filter(t => battleReadyIds.has(t.id));
+  const availableTags = collection.length === 0
+    ? RENTAL_TAGS
+    : battleReadyTags.length > 0
+      ? battleReadyTags
+      : collection;
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
@@ -70,7 +78,9 @@ export default function AreaSelectPage() {
           <p className="text-text-muted text-xs mb-4">
             {collection.length === 0
               ? '還沒有收藏 — 使用出租怪獸！'
-              : `從你的 ${collection.length} 張卡牌中選擇最多 3 隻。`}
+              : battleReadyTags.length > 0
+                ? `顯示 ${battleReadyTags.length} 隻出戰標記的怪獸（可在收藏頁管理）`
+                : `從你的 ${collection.length} 張卡牌中選擇最多 3 隻。（提示：在收藏頁標記「出戰」可篩選常用怪獸）`}
           </p>
           <div className="flex flex-wrap gap-3 mb-6">
             {availableTags.slice(0, 12).map(tag => (

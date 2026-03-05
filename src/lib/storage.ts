@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   collection: 'meza_collection',
   trainer: 'meza_trainer',
   stats: 'meza_stats',
+  battleReady: 'meza_battle_ready',
 };
 
 export function getCollection(): Tag[] {
@@ -22,6 +23,25 @@ export function addToCollection(tag: Tag): void {
 
 export function clearCollection(): void {
   localStorage.removeItem(STORAGE_KEYS.collection);
+}
+
+/* ── Battle-ready set ── */
+export function getBattleReadyIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.battleReady);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+export function toggleBattleReady(tagId: string): boolean {
+  const set = getBattleReadyIds();
+  if (set.has(tagId)) { set.delete(tagId); } else { set.add(tagId); }
+  localStorage.setItem(STORAGE_KEYS.battleReady, JSON.stringify([...set]));
+  return set.has(tagId);
+}
+
+export function isBattleReady(tagId: string): boolean {
+  return getBattleReadyIds().has(tagId);
 }
 
 export function getTrainer(): TrainerProfile | null {
