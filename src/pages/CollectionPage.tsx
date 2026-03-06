@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getCollection, getBattleReadyIds, toggleBattleReady } from '../lib/storage';
+import { getCollection, getBattleReadyIds, toggleBattleReady, removeFromCollection } from '../lib/storage';
 import { TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
 import TagCard from '../components/TagCard';
 
@@ -8,7 +8,7 @@ type SortKey = 'newest' | 'grade-desc' | 'pe-desc';
 const TYPE_LIST = ['fire', 'water', 'grass', 'electric', 'psychic', 'dark', 'dragon', 'fairy', 'fighting', 'normal', 'ice', 'ghost', 'steel', 'poison', 'ground', 'flying', 'bug', 'rock'];
 
 export default function CollectionPage() {
-  const collection = getCollection();
+  const [collection, setCollectionState] = useState(() => getCollection());
   const [gradeFilter, setGradeFilter] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('newest');
@@ -16,12 +16,36 @@ export default function CollectionPage() {
   const [battleReadyOnly, setBattleReadyOnly] = useState(false);
   const [readyIds, setReadyIds] = useState(() => getBattleReadyIds());
 
+  /* Delete mode */
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
+
+  const refreshCollection = () => setCollectionState(getCollection());
+
   const handleToggleReady = (tagId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     toggleBattleReady(tagId);
     setReadyIds(getBattleReadyIds());
   };
+
+  const toggleDeleteSelect = (tagId: string) => {
+    setSelectedForDelete(prev => {
+      const next = new Set(prev);
+      if (next.has(tagId)) next.delete(tagId); else next.add(tagId);
+      return next;
+    });
+  };
+
+  const confirmDelete = () => {
+    if (selectedForDelete.size === 0) return;
+    removeFromCollection([...selectedForDelete]);
+    setSelectedForDelete(new Set());
+    setDeleteMode(false);
+    refreshCollection();
+  };
+
+  const uniqueCount = collection.length;
 
   const filtered = useMemo(() => {
     let items = [...collection];
@@ -40,7 +64,7 @@ export default function CollectionPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl text-center mb-2 neon-text">收藏</h1>
       <p className="text-center text-text-muted mb-6">
-        已收集 {collection.length} 張卡牌
+        已收集 {uniqueCount} 種怪獸
       </p>
 
       {collection.length === 0 ? (
@@ -106,32 +130,72 @@ export default function CollectionPage() {
                 className={`px-2 py-0.5 text-xs rounded ${battleReadyOnly ? 'bg-accent text-white' : 'bg-bg-card text-text-muted'}`}
               >⚔️ 出戰</button>
             </div>
-            <button
-              onClick={() => setShowBack(!showBack)}
-              className="px-2 py-0.5 text-xs rounded bg-bg-card text-text-muted hover:bg-bg-card-hover"
-            >
-              {showBack ? '📋 正面' : '🔄 能力值'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setDeleteMode(d => !d); setSelectedForDelete(new Set()); }}
+                className={`px-2 py-0.5 text-xs rounded ${deleteMode ? 'bg-red-600 text-white' : 'bg-bg-card text-text-muted hover:bg-bg-card-hover'}`}
+              >
+                {deleteMode ? '取消刪除' : '🗑️ 刪除'}
+              </button>
+              <button
+                onClick={() => setShowBack(!showBack)}
+                className="px-2 py-0.5 text-xs rounded bg-bg-card text-text-muted hover:bg-bg-card-hover"
+              >
+                {showBack ? '📋 正面' : '🔄 能力值'}
+              </button>
+            </div>
           </div>
+
+          {/* Delete bar */}
+          {deleteMode && (
+            <div className="flex items-center justify-between bg-red-900/30 border border-red-500/40 rounded-lg px-4 py-2 mb-4">
+              <span className="text-sm text-red-300">
+                已選取 {selectedForDelete.size} 隻怪獸
+              </span>
+              <button
+                onClick={confirmDelete}
+                disabled={selectedForDelete.size === 0}
+                className="px-4 py-1 text-sm rounded bg-red-600 text-white font-display disabled:opacity-30 hover:bg-red-500 transition-all"
+              >
+                確認刪除
+              </button>
+            </div>
+          )}
 
           {/* Grid */}
           <div className="flex flex-wrap gap-3 justify-center">
             {filtered.map((tag, i) => (
               <div key={`${tag.id}-${i}`} className="relative">
-                <Link to={`/collection/${tag.id}`} state={{ tag }}>
-                  <TagCard tag={tag} size="md" showBack={showBack} />
-                </Link>
-                <button
-                  onClick={(e) => handleToggleReady(tag.id, e)}
-                  className={`absolute top-1 right-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-all z-10 ${
-                    readyIds.has(tag.id)
-                      ? 'bg-accent text-white shadow-lg shadow-accent/30'
-                      : 'bg-black/50 text-text-muted hover:bg-black/70'
-                  }`}
-                  title={readyIds.has(tag.id) ? '取消出戰' : '設為出戰'}
-                >
-                  ⚔️
-                </button>
+                {deleteMode ? (
+                  <div onClick={() => toggleDeleteSelect(tag.id)} className="cursor-pointer">
+                    <TagCard
+                      tag={tag}
+                      size="md"
+                      showBack={showBack}
+                      selected={selectedForDelete.has(tag.id)}
+                    />
+                  </div>
+                ) : (
+                  <Link to={`/collection/${tag.id}`} state={{ tag }}>
+                    <TagCard tag={tag} size="md" showBack={showBack} />
+                  </Link>
+                )}
+                {!deleteMode && (
+                  <button
+                    onClick={(e) => handleToggleReady(tag.id, e)}
+                    className={`absolute top-1 right-1 w-6 h-6 rounded-full text-xs flex items-center justify-center transition-all z-10 ${
+                      readyIds.has(tag.id)
+                        ? 'bg-accent text-white shadow-lg shadow-accent/30'
+                        : 'bg-black/50 text-text-muted hover:bg-black/70'
+                    }`}
+                    title={readyIds.has(tag.id) ? '取消出戰' : '設為出戰'}
+                  >
+                    ⚔️
+                  </button>
+                )}
+                {deleteMode && selectedForDelete.has(tag.id) && (
+                  <div className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-600 text-white text-xs flex items-center justify-center z-10">✓</div>
+                )}
               </div>
             ))}
           </div>

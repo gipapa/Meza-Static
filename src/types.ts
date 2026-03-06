@@ -28,6 +28,10 @@ export interface Tag {
   stats: TagStats;
   move: TagMove;
   flags: TagFlags;
+  /** Original tag id before collection suffix */
+  baseId?: string;
+  /** Duplicate merge level 0-5 (each +1 = all stats +10) */
+  plusLevel?: number;
 }
 
 export interface Area {

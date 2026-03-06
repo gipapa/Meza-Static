@@ -6,7 +6,6 @@ import PlayModePage from './pages/PlayModePage';
 import AreaSelectPage from './pages/AreaSelectPage';
 import BattlePage from './pages/BattlePage';
 import CatchPage from './pages/CatchPage';
-import CatchNowPage from './pages/CatchNowPage';
 import ResultPage from './pages/ResultPage';
 import CollectionPage from './pages/CollectionPage';
 import TagDetailPage from './pages/TagDetailPage';
@@ -26,7 +25,7 @@ export default function App() {
             <Route path="/play/area" element={<AreaSelectPage />} />
             <Route path="/play/battle" element={<BattlePage />} />
             <Route path="/play/catch" element={<CatchPage />} />
-            <Route path="/play/catch-now" element={<CatchNowPage />} />
+            <Route path="/play/catch-now" element={<CatchPage />} />
             <Route path="/result" element={<ResultPage />} />
             <Route path="/collection" element={<CollectionPage />} />
             <Route path="/collection/:tagId" element={<TagDetailPage />} />

@@ -1,5 +1,6 @@
 import type { Tag } from '../types';
 import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { getEffectiveTag } from '../lib/storage';
 import { useNameReveal } from '../lib/nameMask';
 
 interface Props {
@@ -46,9 +47,12 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
       {/* Front */}
       {!showBack ? (
         <div className="flex flex-col h-full p-2">
-          {/* Grade */}
+          {/* Grade + plusLevel */}
           <div className={`text-xs font-bold ${gradeClass(tag.grade)}`}>
             {gradeStars(tag.grade)}
+            {(tag.plusLevel ?? 0) > 0 && (
+              <span className="text-neon-cyan ml-0.5">+{tag.plusLevel}</span>
+            )}
           </div>
           {/* Central Art Area */}
           <div className="flex-1 flex items-center justify-center">
@@ -85,10 +89,12 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
         <div className="flex flex-col h-full p-2 text-[10px]">
           <div className="font-display text-xs mb-1">{dn(tag.name)}</div>
           <div className="space-y-0.5">
-            <StatBar label="HP" value={tag.stats.hp} max={300} color="#22C55E" />
-            <StatBar label="ATK" value={tag.stats.atk} max={200} color="#EF4444" />
-            <StatBar label="DEF" value={tag.stats.def} max={200} color="#3B82F6" />
-            <StatBar label="SPD" value={tag.stats.spd} max={200} color="#FBBF24" />
+            {(() => { const s = getEffectiveTag(tag).stats; return (<>
+              <StatBar label="HP" value={s.hp} max={300} color="#22C55E" />
+              <StatBar label="ATK" value={s.atk} max={200} color="#EF4444" />
+              <StatBar label="DEF" value={s.def} max={200} color="#3B82F6" />
+              <StatBar label="SPD" value={s.spd} max={200} color="#FBBF24" />
+            </>); })()}
           </div>
           <div className="mt-2 p-1 rounded bg-white/5">
             <div className="font-bold">{tag.move.name}</div>

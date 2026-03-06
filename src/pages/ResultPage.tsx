@@ -1,14 +1,21 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import type { Tag } from '../types';
 import { addToCollection, incrementStat } from '../lib/storage';
 import TagCard from '../components/TagCard';
+
+interface CaughtInfo {
+  tag: Tag;
+  isNew: boolean;
+  plusLevel: number;
+}
 
 export default function ResultPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as { caughtTags: Tag[]; isCatchNow?: boolean } | null;
   const saved = useRef(false);
+  const [caughtInfos, setCaughtInfos] = useState<CaughtInfo[]>([]);
 
   useEffect(() => {
     if (!state) {
@@ -17,12 +24,14 @@ export default function ResultPage() {
     }
     if (saved.current) return;
     saved.current = true;
-    // Save caught tags to collection
+    const infos: CaughtInfo[] = [];
     state.caughtTags.forEach(tag => {
-      addToCollection(tag);
+      const result = addToCollection(tag);
+      infos.push({ tag, ...result });
       if (tag.grade >= 6) incrementStat('superstarCount');
       else if (tag.grade >= 5) incrementStat('starCount');
     });
+    setCaughtInfos(infos);
     incrementStat('totalBattles');
     incrementStat('totalCatches', state.caughtTags.length);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -55,11 +64,19 @@ export default function ResultPage() {
             你捕獲了 <span className="text-neon-cyan font-bold">{caughtTags.length}</span> 隻怪獸！
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            {caughtTags.map((tag, i) => (
-              <div key={i} className="catch-success" style={{ animationDelay: `${i * 0.2}s` }}>
-                <TagCard tag={tag} size="lg" />
-              </div>
-            ))}
+            {caughtTags.map((tag, i) => {
+              const info = caughtInfos[i];
+              return (
+                <div key={i} className="catch-success text-center" style={{ animationDelay: `${i * 0.2}s` }}>
+                  <TagCard tag={tag} size="lg" />
+                  {info && !info.isNew && (
+                    <div className="mt-1 text-xs font-display text-neon-cyan">
+                      重複捕獲！ +{info.plusLevel}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}

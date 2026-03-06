@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AREAS, getTagById, RENTAL_TAGS } from '../data/monsters';
-import { getCollection, getBattleReadyIds } from '../lib/storage';
+import { getCollection, getBattleReadyIds, getEffectiveTag } from '../lib/storage';
 import TagCard from '../components/TagCard';
 import { useNameReveal } from '../lib/nameMask';
 
@@ -33,7 +33,7 @@ export default function AreaSelectPage() {
 
   const startBattle = () => {
     if (!area || selectedTags.length === 0) return;
-    const tags = selectedTags.map(id => availableTags.find(t => t.id === id)!);
+    const tags = selectedTags.map(id => availableTags.find(t => t.id === id)!).map(getEffectiveTag);
     navigate('/play/battle', { state: { area, playerTags: tags } });
   };
 

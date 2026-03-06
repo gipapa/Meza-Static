@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import type { Tag } from '../types';
 import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { getEffectiveTag } from '../lib/storage';
 import { useNameReveal } from '../lib/nameMask';
 
 export default function TagDetailPage() {
@@ -46,6 +47,9 @@ export default function TagDetailPage() {
             >
               <div className={`text-lg font-bold ${tag.grade >= 6 ? 'superstar-shimmer' : tag.grade >= 5 ? 'star-shimmer' : 'text-gold'}`}>
                 {'★'.repeat(tag.grade)}
+                {(tag.plusLevel ?? 0) > 0 && (
+                  <span className="text-neon-cyan ml-1">+{tag.plusLevel}</span>
+                )}
               </div>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-8xl" style={{ filter: `drop-shadow(0 0 20px ${typeColor})` }}>
@@ -77,10 +81,12 @@ export default function TagDetailPage() {
             >
               <h3 className="font-display text-lg mb-4">{dn(tag.name)} — 能力值</h3>
               <div className="space-y-3 flex-1">
-                <StatBarLarge label="HP" value={tag.stats.hp} max={300} color="#22C55E" />
-                <StatBarLarge label="ATK" value={tag.stats.atk} max={200} color="#EF4444" />
-                <StatBarLarge label="DEF" value={tag.stats.def} max={200} color="#3B82F6" />
-                <StatBarLarge label="SPD" value={tag.stats.spd} max={200} color="#FBBF24" />
+                {(() => { const s = getEffectiveTag(tag).stats; return (<>
+                  <StatBarLarge label="HP" value={s.hp} max={300} color="#22C55E" />
+                  <StatBarLarge label="ATK" value={s.atk} max={200} color="#EF4444" />
+                  <StatBarLarge label="DEF" value={s.def} max={200} color="#3B82F6" />
+                  <StatBarLarge label="SPD" value={s.spd} max={200} color="#FBBF24" />
+                </>); })()}
               </div>
               <div className="mt-4 p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="font-display text-sm mb-1">{tag.move.name}</div>

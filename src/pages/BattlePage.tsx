@@ -5,8 +5,7 @@ import { getTagById, TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/mons
 import { calcDamage, calcEnemyDamage, rollAttackRoulette } from '../lib/battle';
 import { getTypeMultiplier, getEffectivenessLabel, getEffectivenessColor } from '../lib/typeChart';
 import TagCard from '../components/TagCard';
-import BattleAnimation from '../components/BattleAnimation';
-import BattleProjectile, { getProjectileDuration } from '../components/BattleProjectile';
+import BattleOverlayAnimation from '../components/BattleOverlayAnimation';
 import TypeChartTable from '../components/TypeChartTable';
 import { playBGM, stopBGM } from '../lib/bgm';
 import { useNameReveal } from '../lib/nameMask';
@@ -95,15 +94,14 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const [lastEnemyDmg, setLastEnemyDmg] = useState(0);
 
   /* Animation */
-  const [showAnim, setShowAnim] = useState(false);
-  const [animType, setAnimType] = useState('fire');
-  const [animKey, setAnimKey] = useState(0);
-  const [showProjectile, setShowProjectile] = useState(false);
-  const [projectileFrom, setProjectileFrom] = useState<{x:number;y:number}|null>(null);
-  const [projectileTo, setProjectileTo] = useState<{x:number;y:number}|null>(null);
-  const [projType, setProjType] = useState('fire');
-  const [showHitEnemy, setShowHitEnemy] = useState(false);
-  const [showHitAlly, setShowHitAlly] = useState(false);
+  const [battleOverlay, setBattleOverlay] = useState<{
+    attacker: Tag;
+    defender: Tag;
+    moveType: string;
+    moveName: string;
+    damage: number;
+  } | null>(null);
+  const battleOverlayDoneRef = useRef<(() => void) | null>(null);
 
   /* Speed */
   const [playerFirst, setPlayerFirst] = useState(true);
@@ -284,25 +282,16 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setEffectLabel(getEffectivenessLabel(mult));
     setEffectColor(getEffectivenessColor(mult));
 
-    // Projectile ally → enemy
-    const aEl = allyRef.current;
-    const eEl = enemyRef.current;
-    if (aEl && eEl) {
-      const aR = aEl.getBoundingClientRect();
-      const eR = eEl.getBoundingClientRect();
-      setProjectileFrom({ x: aR.left + aR.width / 2, y: aR.top });
-      setProjectileTo({ x: eR.left + eR.width / 2, y: eR.top + eR.height / 2 });
-    }
-    setProjType(ally.tag.move.type);
-    setShowProjectile(true);
-    setAnimKey(prev => prev + 1);
-    setPhase('player-attack-anim');
-    setMessage(`${dn(ally.tag.name)} 使用了 ${ally.tag.move.name}！`);
-    setSubMessage('');
+    setBattleOverlay({
+      attacker: ally.tag,
+      defender: enemy.tag,
+      moveType: ally.tag.move.type,
+      moveName: ally.tag.move.name,
+      damage: dmg,
+    });
 
-    const projDur = getProjectileDuration(ally.tag.move.type);
-    setTimeout(() => {
-      /* Apply dmg */
+    battleOverlayDoneRef.current = () => {
+      setBattleOverlay(null);
       const newHp = Math.max(0, enemy.hp - dmg);
       setEnemies(prev => {
         const n = [...prev];
@@ -317,8 +306,12 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         } else {
           setTimeout(() => doEnemyAttack(), 800);
         }
-      }, 600);
-    }, projDur + 400);
+      }, 300);
+    };
+
+    setPhase('player-attack-anim');
+    setMessage(`${dn(ally.tag.name)} 使用了 ${ally.tag.move.name}！`);
+    setSubMessage('');
   };
 
   /* ── Enemy attack ── */
@@ -334,31 +327,22 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setEffectLabel(getEffectivenessLabel(mult));
     setEffectColor(getEffectivenessColor(mult));
 
-    // Projectile enemy → ally
-    const eEl = enemyRef.current;
-    const aEl = allyRef.current;
-    if (eEl && aEl) {
-      const eR = eEl.getBoundingClientRect();
-      const aR = aEl.getBoundingClientRect();
-      setProjectileFrom({ x: eR.left + eR.width / 2, y: eR.top + eR.height });
-      setProjectileTo({ x: aR.left + aR.width / 2, y: aR.top });
-    }
-    setProjType(enemy.tag.move.type);
-    setShowProjectile(true);
-    setAnimKey(prev => prev + 1);
-    setPhase('enemy-attack-anim');
-    setMessage(`${dn(enemy.tag.name)} 使用了 ${enemy.tag.move.name}！`);
-    setSubMessage('');
+    setBattleOverlay({
+      attacker: enemy.tag,
+      defender: ally.tag,
+      moveType: enemy.tag.move.type,
+      moveName: enemy.tag.move.name,
+      damage: dmg,
+    });
 
-    const projDur = getProjectileDuration(enemy.tag.move.type);
-    setTimeout(() => {
+    battleOverlayDoneRef.current = () => {
+      setBattleOverlay(null);
       const newHp = Math.max(0, ally.hp - dmg);
       setAllies(prev => {
         const n = [...prev];
         n[allyIdx] = { ...n[allyIdx], hp: newHp, fainted: newHp <= 0 };
         return n;
       });
-
       setTimeout(() => {
         if (newHp <= 0) {
           handleMonFainted('ally', newHp);
@@ -369,8 +353,12 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
           setMessage(`換你攻擊！點擊「停止」來停下轉盤！`);
           setSubMessage('');
         }
-      }, 600);
-    }, projDur + 400);
+      }, 300);
+    };
+
+    setPhase('enemy-attack-anim');
+    setMessage(`${dn(enemy.tag.name)} 使用了 ${enemy.tag.move.name}！`);
+    setSubMessage('');
   };
 
   /* ── Mon fainted ── */
@@ -423,28 +411,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setMashCount(0);
     setLastPlayerDmg(0);
     setLastEnemyDmg(0);
-    setShowHitEnemy(false);
-    setShowHitAlly(false);
     setEffectLabel(null);
     setPhase('enemy-send');
   };
-
-  /* ── Projectile done callbacks ── */
-  const handlePlayerProjDone = useCallback(() => {
-    setShowProjectile(false);
-    setAnimType(projType);
-    setShowAnim(true);
-    setShowHitEnemy(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projType]);
-
-  const handleEnemyProjDone = useCallback(() => {
-    setShowProjectile(false);
-    setAnimType(projType);
-    setShowAnim(true);
-    setShowHitAlly(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projType]);
 
   /* ── Render helpers ── */
   const hpBar = (mon: MonState, width = 'w-36') => {
@@ -513,10 +482,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         {/* Active enemy */}
         {activeEnemy && !activeEnemy.fainted && (
           <div className="relative">
-            {showAnim && phase === 'player-attack-anim' && (
-              <BattleAnimation key={`ea-${animKey}`} type={animType} onDone={() => { setShowAnim(false); setShowHitEnemy(false); }} />
-            )}
-            <div ref={enemyRef} className={`text-center ${showHitEnemy ? 'anim-hit' : ''}`}>
+            <div ref={enemyRef} className="text-center">
               <div className="text-5xl mb-2" style={{ filter: monGlow(activeEnemy.tag) }}>{monEmoji(activeEnemy.tag)}</div>
               <div className="font-display text-lg">{dn(activeEnemy.tag.name)}</div>
               <div className="flex justify-center gap-1 my-1">
@@ -583,10 +549,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         {/* Active ally */}
         {activeAlly && !activeAlly.fainted && (
           <div className="relative mb-3">
-            {showAnim && phase === 'enemy-attack-anim' && (
-              <BattleAnimation key={`aa-${animKey}`} type={animType} onDone={() => { setShowAnim(false); setShowHitAlly(false); }} />
-            )}
-            <div ref={allyRef} className={`text-center ${showHitAlly ? 'anim-hit' : ''}`}>
+            <div ref={allyRef} className="text-center">
               <div className="text-4xl mb-1" style={{ filter: monGlow(activeAlly.tag) }}>{monEmoji(activeAlly.tag)}</div>
               <div className="font-display text-sm">{dn(activeAlly.tag.name)}</div>
               <div className="text-xs text-text-muted mb-1">SPD {activeAlly.tag.stats.spd}</div>
@@ -604,7 +567,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
                 size="sm"
                 selected={allyIdx === i}
                 onClick={() => selectAttacker(i)}
-                className={`${a.fainted ? 'opacity-30 grayscale pointer-events-none' : ''} ${phase === 'select-attacker' && !a.fainted ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'} ${phase === 'player-attack-anim' && allyIdx === i ? 'anim-lunge' : ''}`}
+                className={`${a.fainted ? 'opacity-30 grayscale pointer-events-none' : ''} ${phase === 'select-attacker' && !a.fainted ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
               />
               <div className="mt-1">{hpBar(a, 'w-28')}</div>
               {a.fainted && <div className="text-xs text-accent mt-0.5">退場</div>}
@@ -616,14 +579,15 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         </div>
       </div>
 
-      {/* Projectile Overlay */}
-      {showProjectile && projectileFrom && projectileTo && (
-        <BattleProjectile
-          key={`proj-${animKey}`}
-          type={projType}
-          from={projectileFrom}
-          to={projectileTo}
-          onDone={phase === 'player-attack-anim' ? handlePlayerProjDone : handleEnemyProjDone}
+      {/* Battle Overlay Animation */}
+      {battleOverlay && (
+        <BattleOverlayAnimation
+          attacker={battleOverlay.attacker}
+          defender={battleOverlay.defender}
+          moveType={battleOverlay.moveType}
+          moveName={battleOverlay.moveName}
+          damage={battleOverlay.damage}
+          onComplete={() => battleOverlayDoneRef.current?.()}
         />
       )}
 

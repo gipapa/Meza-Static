@@ -7,18 +7,83 @@ const STORAGE_KEYS = {
   battleReady: 'meza_battle_ready',
 };
 
+function getBaseId(tag: Tag): string {
+  return tag.baseId ?? tag.id.replace(/_\d{13,}$/, '');
+}
+
+/** Auto-migrate old duplicate entries into plusLevel system */
+function deduplicateCollection(tags: Tag[]): Tag[] {
+  const grouped = new Map<string, Tag[]>();
+  for (const tag of tags) {
+    const bid = getBaseId(tag);
+    if (!grouped.has(bid)) grouped.set(bid, []);
+    grouped.get(bid)!.push(tag);
+  }
+  const result: Tag[] = [];
+  for (const [bid, group] of grouped) {
+    const base = group[0];
+    const extraDupes = group.length - 1;
+    result.push({
+      ...base,
+      baseId: bid,
+      plusLevel: Math.min((base.plusLevel ?? 0) + extraDupes, 5),
+    });
+  }
+  return result;
+}
+
 export function getCollection(): Tag[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.collection);
-    return raw ? JSON.parse(raw) : [];
+    const tags: Tag[] = raw ? JSON.parse(raw) : [];
+    // Auto-migrate old duplicates
+    if (tags.length > 0 && tags.some(t => t.baseId === undefined)) {
+      const migrated = deduplicateCollection(tags);
+      localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(migrated));
+      return migrated;
+    }
+    return tags;
   } catch { return []; }
 }
 
-export function addToCollection(tag: Tag): void {
+export function addToCollection(tag: Tag): { plusLevel: number; isNew: boolean } {
   const col = getCollection();
-  // Allow duplicates (like real gacha)
-  col.push({ ...tag, id: `${tag.id}_${Date.now()}` });
+  const baseId = tag.baseId ?? tag.id;
+  const existing = col.find(t => getBaseId(t) === baseId);
+
+  if (existing) {
+    const cur = existing.plusLevel ?? 0;
+    if (cur < 5) {
+      existing.plusLevel = cur + 1;
+      localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(col));
+      return { plusLevel: existing.plusLevel, isNew: false };
+    }
+    return { plusLevel: 5, isNew: false };
+  }
+  col.push({ ...tag, id: `${baseId}_${Date.now()}`, baseId, plusLevel: 0 });
   localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(col));
+  return { plusLevel: 0, isNew: true };
+}
+
+export function removeFromCollection(tagIds: string[]): void {
+  const col = getCollection();
+  const filtered = col.filter(t => !tagIds.includes(t.id));
+  localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(filtered));
+}
+
+/** Return a tag with stats boosted by plusLevel */
+export function getEffectiveTag(tag: Tag): Tag {
+  const bonus = (tag.plusLevel ?? 0) * 10;
+  if (bonus === 0) return tag;
+  return {
+    ...tag,
+    stats: {
+      hp: tag.stats.hp + bonus,
+      atk: tag.stats.atk + bonus,
+      def: tag.stats.def + bonus,
+      spd: tag.stats.spd + bonus,
+    },
+  };
 }
 
 export function clearCollection(): void {
