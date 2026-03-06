@@ -107,6 +107,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
   /* Speed */
   const [playerFirst, setPlayerFirst] = useState(true);
+  const playerFirstRef = useRef(true); // always sync with playerFirst to avoid stale closures
 
   /* Effectiveness */
   const [effectLabel, setEffectLabel] = useState<string | null>(null);
@@ -156,6 +157,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     const eSpd = enemy.tag.stats.spd;
     const first = aSpd >= eSpd;
     setPlayerFirst(first);
+    playerFirstRef.current = first;
     setMessage(`⚡ 速度比較 — ${dn(ally.tag.name)} SPD ${aSpd}  vs  ${dn(enemy.tag.name)} SPD ${eSpd}`);
     setSubMessage(first ? `${dn(ally.tag.name)} 先攻！` : `${dn(enemy.tag.name)} 先攻！`);
 
@@ -310,7 +312,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       setTimeout(() => {
         if (newHp <= 0) {
           handleMonFainted('enemy', newHp);
-        } else if (!playerFirst) {
+        } else if (!playerFirstRef.current) {
           afterBothAttacked();
         } else {
           setTimeout(() => doEnemyAttack(), 800);
@@ -360,7 +362,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       setTimeout(() => {
         if (newHp <= 0) {
           handleMonFainted('ally', newHp);
-        } else if (playerFirst) {
+        } else if (playerFirstRef.current) {
           afterBothAttacked();
         } else {
           setPhase('roulette');
