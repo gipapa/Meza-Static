@@ -77,14 +77,14 @@ export default function BallWheel({ onResult }: Props) {
       setResultBall(ball);
       const angleForBall = getAngleForBall(ball);
       const currentRot = rotRef.current;
-      const extraSpins = 2;
+      const extraSpins = 1;
       const remainder = ((currentRot % 360) + 360) % 360;
       const neededRemainder = (360 - angleForBall) % 360;
       const delta = ((neededRemainder - remainder) + 360) % 360;
       targetRef.current = currentRot + extraSpins * 360 + delta;
       // Compute friction so deceleration from current speed covers exact distance
       const totalDist = targetRef.current - rotRef.current;
-      frictionRef.current = 1 - (speedRef.current / totalDist);
+      frictionRef.current = 1 - (speedRef.current / totalDist) * 1.8;
       phaseRef.current = 'stopping';
       setPhase('stopping');
     }

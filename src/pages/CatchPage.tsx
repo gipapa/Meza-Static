@@ -7,6 +7,7 @@ import { shuffle } from '../lib/rng';
 import TagCard from '../components/TagCard';
 import BallWheel from '../components/BallWheel';
 import CatchAnimation from '../components/CatchAnimation';
+import MultiCatchAnimation from '../components/MultiCatchAnimation';
 import { useNameReveal } from '../lib/nameMask';
 
 type Phase = 'last-select' | 'ball-wheel' | 'multi-catch' | 'catch-result' | 'bonus' | 'bonus-stop' | 'bonus-result' | 'done';
@@ -42,7 +43,7 @@ export default function CatchPage() {
 
   /* Multi-catch state (battle mode: throw at all 3 enemies) */
   const [multiResults, setMultiResults] = useState<{ tag: Tag; success: boolean }[]>([]);
-  const multiIdxRef = useRef(0);
+  const [showMultiCatchAnim, setShowMultiCatchAnim] = useState(false);
   const bonusRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* Animation overlay state */
@@ -90,40 +91,27 @@ export default function CatchPage() {
       setShowCatchAnim(true);
       setMessage(`${BALL_NAMES[ball]}！投擲中...`);
     } else {
-      /* Multi-catch: throw at all enemies */
+      /* Multi-catch: throw at all enemies simultaneously */
       const targets = enemies.slice(0, 3);
       const results = targets.map(tag => ({ tag, success: attemptCatch(ball, catchGauge) }));
       setMultiResults(results);
-      multiIdxRef.current = 0;
-      launchMultiAnim(results, 0, ball);
+      setPhase('multi-catch');
+      setMessage(`${BALL_NAMES[ball]}！向全部怪獸投擲中...`);
+      setShowMultiCatchAnim(true);
     }
   };
 
-  const launchMultiAnim = (results: { tag: Tag; success: boolean }[], idx: number, ball: BallType) => {
-    const { tag, success } = results[idx];
-    multiIdxRef.current = idx;
-    setAnimBall(ball);
-    setAnimEmoji(TYPE_EMOJI[tag.types[0]] || '⚪');
-    setAnimSuccess(success);
-    setPhase('multi-catch');
-    setMessage(`${BALL_NAMES[ball]}！向 ${dn(tag.name)} 投擲中... (${idx + 1}/${results.length})`);
-    animCallbackRef.current = () => {
-      if (success) setCaughtTags(prev => [...prev, tag]);
-      setShowCatchAnim(false);
-      const next = idx + 1;
-      if (next < results.length) {
-        setTimeout(() => launchMultiAnim(results, next, ball), 500);
-      } else {
-        const ct = results.filter(r => r.success).length;
-        setPhase('catch-result');
-        setMessage(
-          ct === 0 ? '💨 全部逃跑了...'
-          : ct === results.length ? `🎉 全部捕獲！共 ${ct} 隻！`
-          : `捕獲了 ${ct} 隻怪獸！`,
-        );
-      }
-    };
-    setShowCatchAnim(true);
+  const handleMultiCatchComplete = () => {
+    setShowMultiCatchAnim(false);
+    const caught = multiResults.filter(r => r.success);
+    setCaughtTags(prev => [...prev, ...caught.map(r => r.tag)]);
+    const ct = caught.length;
+    setPhase('catch-result');
+    setMessage(
+      ct === 0 ? '💨 全部逃跑了...'
+      : ct === multiResults.length ? `🎉 全部捕獲！共 ${ct} 隻！`
+      : `捕獲了 ${ct} 隻怪獸！`,
+    );
   };
 
   const goToBonus = () => {
@@ -213,23 +201,13 @@ export default function CatchPage() {
         </div>
       )}
 
-      {/* Phase: Multi-catch in progress — show enemy lineup with status */}
-      {phase === 'multi-catch' && !isCatchNow && (
-        <div>
-          <p className="text-center text-text-muted text-sm mb-4">對全部怪獸投擲中...</p>
-          <div className="flex justify-center gap-4">
-            {multiResults.map((r, i) => (
-              <div key={r.tag.id} className="text-center relative">
-                <TagCard tag={r.tag} size="md" className={i > multiIdxRef.current ? 'opacity-40' : ''} />
-                {i < multiIdxRef.current && (
-                  <div className="absolute -top-2 -right-2 text-2xl">
-                    {r.success ? '✅' : '❌'}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Phase: Multi-catch animation overlay */}
+      {showMultiCatchAnim && ballType && (
+        <MultiCatchAnimation
+          targets={multiResults}
+          ballType={ballType}
+          onComplete={handleMultiCatchComplete}
+        />
       )}
 
       {/* Phase: Catch Result */}
