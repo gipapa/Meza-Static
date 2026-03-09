@@ -9,7 +9,7 @@ import BallWheel from '../components/BallWheel';
 import CatchAnimation from '../components/CatchAnimation';
 import { useNameReveal } from '../lib/nameMask';
 
-type Phase = 'last-select' | 'ball-wheel' | 'catch-result' | 'bonus' | 'bonus-stop' | 'bonus-result' | 'done';
+type Phase = 'last-select' | 'ball-wheel' | 'multi-catch' | 'catch-result' | 'bonus' | 'bonus-stop' | 'bonus-result' | 'done';
 
 export default function CatchPage() {
   const location = useLocation();
@@ -29,7 +29,7 @@ export default function CatchPage() {
   const enemies = state?.enemies ?? shuffle(ALL_TAGS.filter(t => t.grade <= 4)).slice(0, 3);
   const { dn } = useNameReveal();
 
-  const [phase, setPhase] = useState<Phase>('last-select');
+  const [phase, setPhase] = useState<Phase>(isCatchNow ? 'last-select' : 'ball-wheel');
   const [selectedTarget, setSelectedTarget] = useState<Tag | null>(null);
   const [ballType, setBallType] = useState<BallType | null>(null);
   const [caught, setCaught] = useState(false);
@@ -38,7 +38,11 @@ export default function CatchPage() {
   const [bonusStopped, setBonusStopped] = useState(false);
   const [bonusCaught, setBonusCaught] = useState(false);
   const [caughtTags, setCaughtTags] = useState<Tag[]>([]);
-  const [message, setMessage] = useState('選擇一隻怪獸來捕獲！');
+  const [message, setMessage] = useState(isCatchNow ? '選擇一隻怪獸來捕獲！' : '旋轉轉盤決定球種！');
+
+  /* Multi-catch state (battle mode: throw at all 3 enemies) */
+  const [multiResults, setMultiResults] = useState<{ tag: Tag; success: boolean }[]>([]);
+  const multiIdxRef = useRef(0);
   const bonusRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* Animation overlay state */
@@ -67,23 +71,59 @@ export default function CatchPage() {
 
   const handleBallResult = (ball: BallType) => {
     setBallType(ball);
-    const success = attemptCatch(ball, catchGauge);
-    setCaught(success);
 
-    /* Launch animation overlay */
+    if (isCatchNow) {
+      /* Single-target catch (quick catch mode) */
+      const success = attemptCatch(ball, catchGauge);
+      setCaught(success);
+      setAnimBall(ball);
+      setAnimEmoji(selectedTarget ? (TYPE_EMOJI[selectedTarget.types[0]] || '⚪') : '⚪');
+      setAnimSuccess(success);
+      animCallbackRef.current = () => {
+        if (success && selectedTarget) {
+          setCaughtTags(prev => [...prev, selectedTarget]);
+        }
+        setPhase('catch-result');
+        setMessage(success ? `🎉 捕獲到 ${dn(selectedTarget?.name ?? '')}！` : `💨 ${dn(selectedTarget?.name ?? '')} 逃跑了！`);
+        setShowCatchAnim(false);
+      };
+      setShowCatchAnim(true);
+      setMessage(`${BALL_NAMES[ball]}！投擲中...`);
+    } else {
+      /* Multi-catch: throw at all enemies */
+      const targets = enemies.slice(0, 3);
+      const results = targets.map(tag => ({ tag, success: attemptCatch(ball, catchGauge) }));
+      setMultiResults(results);
+      multiIdxRef.current = 0;
+      launchMultiAnim(results, 0, ball);
+    }
+  };
+
+  const launchMultiAnim = (results: { tag: Tag; success: boolean }[], idx: number, ball: BallType) => {
+    const { tag, success } = results[idx];
+    multiIdxRef.current = idx;
     setAnimBall(ball);
-    setAnimEmoji(selectedTarget ? (TYPE_EMOJI[selectedTarget.types[0]] || '⚪') : '⚪');
+    setAnimEmoji(TYPE_EMOJI[tag.types[0]] || '⚪');
     setAnimSuccess(success);
+    setPhase('multi-catch');
+    setMessage(`${BALL_NAMES[ball]}！向 ${dn(tag.name)} 投擲中... (${idx + 1}/${results.length})`);
     animCallbackRef.current = () => {
-      if (success && selectedTarget) {
-        setCaughtTags(prev => [...prev, selectedTarget]);
-      }
-      setPhase('catch-result');
-      setMessage(success ? `🎉 捕獲到 ${dn(selectedTarget?.name ?? '')}！` : `💨 ${dn(selectedTarget?.name ?? '')} 逃跑了！`);
+      if (success) setCaughtTags(prev => [...prev, tag]);
       setShowCatchAnim(false);
+      const next = idx + 1;
+      if (next < results.length) {
+        setTimeout(() => launchMultiAnim(results, next, ball), 500);
+      } else {
+        const ct = results.filter(r => r.success).length;
+        setPhase('catch-result');
+        setMessage(
+          ct === 0 ? '💨 全部逃跑了...'
+          : ct === results.length ? `🎉 全部捕獲！共 ${ct} 隻！`
+          : `捕獲了 ${ct} 隻怪獸！`,
+        );
+      }
     };
     setShowCatchAnim(true);
-    setMessage(`${BALL_NAMES[ball]}！投擲中...`);
   };
 
   const goToBonus = () => {
@@ -145,8 +185,8 @@ export default function CatchPage() {
         </div>
       )}
 
-      {/* Phase: Target Selection */}
-      {phase === 'last-select' && (
+      {/* Phase: Target Selection (CatchNow only) */}
+      {phase === 'last-select' && isCatchNow && (
         <div>
           <p className="text-center text-text-muted text-sm mb-4">選擇一隻怪獸來捕獲：</p>
           <div className="flex justify-center gap-4">
@@ -173,19 +213,62 @@ export default function CatchPage() {
         </div>
       )}
 
+      {/* Phase: Multi-catch in progress — show enemy lineup with status */}
+      {phase === 'multi-catch' && !isCatchNow && (
+        <div>
+          <p className="text-center text-text-muted text-sm mb-4">對全部怪獸投擲中...</p>
+          <div className="flex justify-center gap-4">
+            {multiResults.map((r, i) => (
+              <div key={r.tag.id} className="text-center relative">
+                <TagCard tag={r.tag} size="md" className={i > multiIdxRef.current ? 'opacity-40' : ''} />
+                {i < multiIdxRef.current && (
+                  <div className="absolute -top-2 -right-2 text-2xl">
+                    {r.success ? '✅' : '❌'}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Phase: Catch Result */}
       {phase === 'catch-result' && (
         <div className="text-center">
-          {caught ? (
-            <div className="catch-success">
-              <div className="text-6xl mb-4">🎉</div>
-              <div className="font-display text-2xl text-neon-green mb-2">捕獲成功！</div>
-              {selectedTarget && <TagCard tag={selectedTarget} size="lg" className="mx-auto" />}
-            </div>
+          {isCatchNow ? (
+            /* Single-target result (CatchNow) */
+            caught ? (
+              <div className="catch-success">
+                <div className="text-6xl mb-4">🎉</div>
+                <div className="font-display text-2xl text-neon-green mb-2">捕獲成功！</div>
+                {selectedTarget && <TagCard tag={selectedTarget} size="lg" className="mx-auto" />}
+              </div>
+            ) : (
+              <div>
+                <div className="text-6xl mb-4">💨</div>
+                <div className="font-display text-xl text-text-muted mb-2">它逃跑了...</div>
+              </div>
+            )
           ) : (
+            /* Multi-catch summary (battle) */
             <div>
-              <div className="text-6xl mb-4">💨</div>
-              <div className="font-display text-xl text-text-muted mb-2">它逃跑了...</div>
+              <div className="text-4xl mb-4">
+                {multiResults.every(r => r.success) ? '🎉🎉🎉'
+                  : multiResults.some(r => r.success) ? '🎉'
+                  : '💨'}
+              </div>
+              <div className="flex justify-center gap-4 mb-4">
+                {multiResults.map(r => (
+                  <div key={r.tag.id} className="text-center relative">
+                    <TagCard tag={r.tag} size="md" className={!r.success ? 'opacity-40 grayscale' : ''} />
+                    <div className="mt-1 font-display text-xs">
+                      {r.success
+                        ? <span className="text-neon-green">捕獲成功 ✅</span>
+                        : <span className="text-red-400">逃跑了 ❌</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           <div className="mt-6 flex justify-center gap-3">

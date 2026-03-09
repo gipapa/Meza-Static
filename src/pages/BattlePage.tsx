@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Area, Tag } from '../types';
 import { getTagById, TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { shuffle, pick } from '../lib/rng';
 import { calcDamage, calcEnemyDamage, rollAttackRoulette } from '../lib/battle';
 import { getTypeMultiplier, getEffectivenessLabel, getEffectivenessColor } from '../lib/typeChart';
 import TagCard from '../components/TagCard';
@@ -58,11 +59,12 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     return () => stopBGM();
   }, []);
 
-  /* Build enemy team (boss + 2 minions) */
-  const enemyTagsRaw = [
-    getTagById(area.bossPool[0])!,
-    ...area.minionPool.map(id => getTagById(id)!),
-  ].slice(0, 3);
+  /* Build enemy team (1 random boss + 2 random minions) */
+  const [enemyTagsRaw] = useState(() => {
+    const boss = getTagById(pick(area.bossPool))!;
+    const minions = shuffle(area.minionPool.map(id => getTagById(id)!)).slice(0, 2);
+    return [boss, ...minions];
+  });
 
   /* Mon state arrays */
   const [enemies, setEnemies] = useState<MonState[]>(() =>
@@ -95,8 +97,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
   /* Animation */
   const [battleOverlay, setBattleOverlay] = useState<{
-    attacker: Tag;
-    defender: Tag;
+    enemy: Tag;
+    ally: Tag;
+    isPlayerAttacking: boolean;
     moveType: string;
     moveName: string;
     damage: number;
@@ -283,8 +286,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setEffectColor(getEffectivenessColor(mult));
 
     setBattleOverlay({
-      attacker: ally.tag,
-      defender: enemy.tag,
+      enemy: enemy.tag,
+      ally: ally.tag,
+      isPlayerAttacking: true,
       moveType: ally.tag.move.type,
       moveName: ally.tag.move.name,
       damage: dmg,
@@ -328,8 +332,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setEffectColor(getEffectivenessColor(mult));
 
     setBattleOverlay({
-      attacker: enemy.tag,
-      defender: ally.tag,
+      enemy: enemy.tag,
+      ally: ally.tag,
+      isPlayerAttacking: false,
       moveType: enemy.tag.move.type,
       moveName: enemy.tag.move.name,
       damage: dmg,
@@ -582,8 +587,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       {/* Battle Overlay Animation */}
       {battleOverlay && (
         <BattleOverlayAnimation
-          attacker={battleOverlay.attacker}
-          defender={battleOverlay.defender}
+          enemy={battleOverlay.enemy}
+          ally={battleOverlay.ally}
+          isPlayerAttacking={battleOverlay.isPlayerAttacking}
           moveType={battleOverlay.moveType}
           moveName={battleOverlay.moveName}
           damage={battleOverlay.damage}

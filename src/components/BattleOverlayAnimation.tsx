@@ -5,8 +5,9 @@ import { useNameReveal } from '../lib/nameMask';
 import AnimationOverlay from './AnimationOverlay';
 
 interface Props {
-  attacker: Tag;
-  defender: Tag;
+  enemy: Tag;
+  ally: Tag;
+  isPlayerAttacking: boolean;
   moveType: string;
   moveName: string;
   damage: number;
@@ -40,8 +41,9 @@ const STAGE_NEXT: Record<Stage, Stage | null> = {
 };
 
 export default function BattleOverlayAnimation({
-  attacker,
-  defender,
+  enemy,
+  ally,
+  isPlayerAttacking,
   moveType,
   moveName,
   damage,
@@ -51,10 +53,11 @@ export default function BattleOverlayAnimation({
   const [stage, setStage] = useState<Stage>('intro');
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
+  const attacker = isPlayerAttacking ? ally : enemy;
   const color = TYPE_COLORS[moveType] || '#A78BFA';
   const emoji = TYPE_EMOJI[moveType] || '⚪';
-  const attackerEmoji = TYPE_EMOJI[attacker.types[0]] || '⚪';
-  const defenderEmoji = TYPE_EMOJI[defender.types[0]] || '⚪';
+  const enemyEmoji = TYPE_EMOJI[enemy.types[0]] || '⚪';
+  const allyEmoji = TYPE_EMOJI[ally.types[0]] || '⚪';
 
   const particles = useMemo(
     () =>
@@ -80,21 +83,23 @@ export default function BattleOverlayAnimation({
 
   return (
     <AnimationOverlay className="w-80 h-96">
-      {/* Defender (top) */}
+      {/* Enemy (always top) */}
       <div
         className={`absolute top-8 flex flex-col items-center transition-all ${
-          stage === 'effect' || stage === 'damage' ? 'bo-hit' : ''
+          !isPlayerAttacking && stage === 'lunge' ? 'bo-lunge-down' : ''
+        } ${
+          isPlayerAttacking && (stage === 'effect' || stage === 'damage') ? 'bo-hit' : ''
         }`}
       >
         <div
           className="text-5xl mb-1"
-          style={{ filter: `drop-shadow(0 0 8px ${TYPE_COLORS[defender.types[0]]})` }}
+          style={{ filter: `drop-shadow(0 0 8px ${TYPE_COLORS[enemy.types[0]]})` }}
         >
-          {defenderEmoji}
+          {enemyEmoji}
         </div>
-        <div className="font-display text-sm text-text-primary">{dn(defender.name)}</div>
+        <div className="font-display text-sm text-text-primary">{dn(enemy.name)}</div>
         <div className="flex gap-1 mt-0.5">
-          {defender.types.map(t => (
+          {enemy.types.map(t => (
             <span
               key={t}
               className="text-[9px] px-1 py-0.5 rounded-full"
@@ -146,21 +151,23 @@ export default function BattleOverlayAnimation({
         </div>
       )}
 
-      {/* Attacker (bottom) */}
+      {/* Ally (always bottom) */}
       <div
         className={`absolute bottom-14 flex flex-col items-center transition-all ${
-          stage === 'lunge' ? 'bo-lunge' : ''
+          isPlayerAttacking && stage === 'lunge' ? 'bo-lunge' : ''
+        } ${
+          !isPlayerAttacking && (stage === 'effect' || stage === 'damage') ? 'bo-hit' : ''
         }`}
       >
         <div
           className="text-5xl mb-1"
-          style={{ filter: `drop-shadow(0 0 8px ${TYPE_COLORS[attacker.types[0]]})` }}
+          style={{ filter: `drop-shadow(0 0 8px ${TYPE_COLORS[ally.types[0]]})` }}
         >
-          {attackerEmoji}
+          {allyEmoji}
         </div>
-        <div className="font-display text-sm text-text-primary">{dn(attacker.name)}</div>
+        <div className="font-display text-sm text-text-primary">{dn(ally.name)}</div>
         <div className="flex gap-1 mt-0.5">
-          {attacker.types.map(t => (
+          {ally.types.map(t => (
             <span
               key={t}
               className="text-[9px] px-1 py-0.5 rounded-full"
@@ -190,6 +197,11 @@ export default function BattleOverlayAnimation({
           50%  { transform: translateY(-40px) scale(1.1); }
           100% { transform: translateY(-10px) scale(1.05); }
         }
+        @keyframes boLungeDown {
+          0%   { transform: translateY(0); }
+          50%  { transform: translateY(40px) scale(1.1); }
+          100% { transform: translateY(10px) scale(1.05); }
+        }
         @keyframes boHit {
           0%, 100% { transform: translateX(0); filter: brightness(1); }
           15%  { transform: translateX(-6px); filter: brightness(2); }
@@ -210,7 +222,8 @@ export default function BattleOverlayAnimation({
           50%  { opacity: 1; transform: scale(1.3) translateY(-5px); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .bo-lunge    { animation: boLunge 0.5s ease-out forwards; }
+        .bo-lunge      { animation: boLunge 0.5s ease-out forwards; }
+        .bo-lunge-down { animation: boLungeDown 0.5s ease-out forwards; }
         .bo-hit      { animation: boHit 0.6s ease-in-out; }
         .bo-ring     {
           position: absolute;
