@@ -51,7 +51,7 @@ export default function BattleOverlayAnimation({
 }: Props) {
   const { dn } = useNameReveal();
   const [stage, setStage] = useState<Stage>('intro');
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const attacker = isPlayerAttacking ? ally : enemy;
   const color = TYPE_COLORS[moveType] || '#A78BFA';
@@ -78,7 +78,7 @@ export default function BattleOverlayAnimation({
     } else {
       timerRef.current = setTimeout(onComplete, STAGE_DURATION.outro);
     }
-    return () => clearTimeout(timerRef.current);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [stage, onComplete]);
 
   return (

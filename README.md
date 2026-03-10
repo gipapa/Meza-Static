@@ -39,8 +39,15 @@ Monster names are masked by default (first and last character shown, middle repl
 ### Animations (Reusable Overlay System)
 - **`AnimationOverlay`** — shared full-screen modal frame used by all animation sequences
 - **`BattleOverlayAnimation`** — centered card duel view: attacker lunges, particles burst on defender, damage number pops; accepts any `attacker` / `defender` Tag pair — reusable anywhere
-- **`CatchAnimation`** — ball throw → absorb → shake (1–3 times, ~1 s each) → result; built on `AnimationOverlay`
 - **`BattleProjectile`** — fixed-position projectile system with 8 path variants (straight, arc, zigzag, wobble, scatter, parabolic, curve-s, fade-in) and per-type trail particles
+
+### Phaser 3 Animations (GPU-accelerated)
+- **`WheelScene`** — physics-based ball roulette wheel with smooth proportional deceleration (no re-acceleration glitch); renders 4 weighted ball segments with glow effects
+- **`BattleScene`** — full GPU-accelerated battle overlay: attacker lunges, particles burst, HP bar drains, damage number pops with screen shake
+- **`CatchScene`** — 5-stage cinematic catch sequence: ball throw arc → monster absorption with particles → camera zoom-in → 1–3 ball shakes with camera micro-shake → success (sparkle burst, star orbits) or escape (ball break, monster dash)
+- **`PhaserContainer`** — React wrapper that mounts any Phaser game config into a `<div>`, handling StrictMode double-mount with `requestAnimationFrame` guard
+- **`PhaserCatchOverlay`** — full-screen overlay using `CatchScene`; replaces the CSS-based catch animation in `CatchPage`
+- **`PhaserBallWheel`** — drop-in replacement for the CSS `BallWheel` component, powered by `WheelScene`
 
 ### Other
 - **Type Chart** — inline reference table, toggle during battle
@@ -59,6 +66,7 @@ Monster names are masked by default (first and last character shown, middle repl
 | Build | **Vite 6** |
 | Styling | **Tailwind CSS v4** (`@tailwindcss/vite` plugin, zero PostCSS config) |
 | Routing | **react-router-dom v7** — `HashRouter` for GitHub Pages compatibility |
+| Game Engine | **Phaser 3.90** — WebGL/Canvas GPU-accelerated scenes for animations |
 | Fonts | Russo One (display), Chakra Petch (UI) via CSS `@import` |
 | Persistence | `localStorage` only — no cookies, no external APIs |
 | Deploy | GitHub Pages · GitHub Actions |
@@ -83,11 +91,19 @@ src/
 ├── components/
 │   ├── AnimationOverlay.tsx       # Reusable modal frame for all animations
 │   ├── BattleOverlayAnimation.tsx # Full-screen attacker-vs-defender card duel
-│   ├── CatchAnimation.tsx         # Ball-throw catch sequence
+│   ├── CatchAnimation.tsx         # CSS-based ball-throw catch sequence (legacy)
 │   ├── BattleProjectile.tsx       # Per-type projectile paths + trails
-│   ├── BallWheel.tsx              # Spin-to-stop ball roulette widget
+│   ├── BallWheel.tsx              # Spin-to-stop ball roulette widget (CSS)
 │   ├── TagCard.tsx                # Flip card with front/back stats
 │   └── ...
+├── phaser/
+│   ├── PhaserContainer.tsx        # Generic React→Phaser mount wrapper
+│   ├── PhaserBallWheel.tsx        # Phaser-powered ball roulette (WheelScene)
+│   ├── PhaserBattleOverlay.tsx    # Phaser-powered battle animation overlay
+│   ├── PhaserCatchOverlay.tsx     # Phaser-powered catch animation overlay
+│   ├── WheelScene.ts              # Phaser scene: ball roulette with deceleration
+│   ├── BattleScene.ts             # Phaser scene: GPU-accelerated battle duel
+│   └── CatchScene.ts             # Phaser scene: 5-stage cinematic catch sequence
 ├── data/
 │   └── monsters.ts  # 151 Tag definitions + 6 Area configs
 ├── lib/
@@ -96,9 +112,10 @@ src/
 │   ├── nameMask.ts  # Copyright name masking + reveal hook
 │   ├── storage.ts   # localStorage helpers
 │   └── rng.ts       # Seeded shuffle + random utilities
-├── pages/           # 11 route pages
+├── pages/           # 12 route pages
 │   # Home → PlayMode → AreaSelect → Battle → Catch → Result
 │   # Collection → TagDetail → Trainer → HowTo → Settings
+│   # TestBattlePage (dev-only animation test harness)
 ├── types.ts         # Tag, Area, BallType, MonState interfaces
 └── index.css        # Tailwind theme tokens + keyframe animations
 ```
