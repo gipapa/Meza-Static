@@ -31,7 +31,7 @@ export default function MultiCatchAnimation({ targets, ballType, onComplete }: P
   const [shakeCounts] = useState(() => targets.map(() => randInt(1, 3)));
   const maxShakes = Math.max(...shakeCounts);
   const [currentShake, setCurrentShake] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ballColor = BALL_COLORS[ballType];
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function MultiCatchAnimation({ targets, ballType, onComplete }: P
     } else if (stage === 'result') {
       timerRef.current = setTimeout(onComplete, 1800);
     }
-    return () => clearTimeout(timerRef.current);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [stage, currentShake, maxShakes, onComplete]);
 
   return (

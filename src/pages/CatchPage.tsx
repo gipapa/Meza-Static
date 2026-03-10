@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Area, Tag, BallType } from '../types';
-import { attemptCatch, BALL_NAMES, BALL_COLORS } from '../lib/battle';
+import { attemptCatch, BALL_NAMES } from '../lib/battle';
 import { ALL_TAGS, TYPE_EMOJI } from '../data/monsters';
-import { shuffle } from '../lib/rng';
+import { shuffle, randInt } from '../lib/rng';
 import TagCard from '../components/TagCard';
-import BallWheel from '../components/BallWheel';
-import CatchAnimation from '../components/CatchAnimation';
+import PhaserBallWheel from '../phaser/PhaserBallWheel';
+import PhaserCatchOverlay from '../phaser/PhaserCatchOverlay';
 import MultiCatchAnimation from '../components/MultiCatchAnimation';
 import { useNameReveal } from '../lib/nameMask';
 
@@ -51,6 +51,8 @@ export default function CatchPage() {
   const [animBall, setAnimBall] = useState<BallType>('poke');
   const [animEmoji, setAnimEmoji] = useState('⚪');
   const [animSuccess, setAnimSuccess] = useState(false);
+  const [animShakeCount, setAnimShakeCount] = useState(1);
+  const [animName, setAnimName] = useState('');
   const animCallbackRef = useRef<(() => void) | null>(null);
 
   // Bonus cursor cycling
@@ -80,6 +82,8 @@ export default function CatchPage() {
       setAnimBall(ball);
       setAnimEmoji(selectedTarget ? (TYPE_EMOJI[selectedTarget.types[0]] || '⚪') : '⚪');
       setAnimSuccess(success);
+      setAnimShakeCount(randInt(1, 3));
+      setAnimName(selectedTarget ? dn(selectedTarget.name) : '');
       animCallbackRef.current = () => {
         if (success && selectedTarget) {
           setCaughtTags(prev => [...prev, selectedTarget]);
@@ -134,6 +138,8 @@ export default function CatchPage() {
     setAnimBall('poke');
     setAnimEmoji(TYPE_EMOJI[bonusGrid[bonusCursor].types[0]] || '⚪');
     setAnimSuccess(success);
+    setAnimShakeCount(randInt(1, 3));
+    setAnimName(dn(bonusGrid[bonusCursor].name));
     animCallbackRef.current = () => {
       if (success) {
         setCaughtTags(prev => [...prev, bonusGrid[bonusCursor]]);
@@ -186,7 +192,7 @@ export default function CatchPage() {
       {phase === 'ball-wheel' && (
         <div className="text-center">
           <p className="text-text-muted text-sm mb-4">旋轉轉盤決定球種！</p>
-          <BallWheel onResult={handleBallResult} />
+          <PhaserBallWheel onResult={handleBallResult} />
         </div>
       )}
 
@@ -311,12 +317,14 @@ export default function CatchPage() {
         </div>
       )}
 
-      {/* Catch animation overlay */}
+      {/* Catch animation overlay (Phaser) */}
       {showCatchAnim && (
-        <CatchAnimation
+        <PhaserCatchOverlay
           ballType={animBall}
-          targetEmoji={animEmoji}
+          monsterEmoji={animEmoji}
+          monsterName={animName}
           success={animSuccess}
+          shakeCount={animShakeCount}
           onComplete={() => animCallbackRef.current?.()}
         />
       )}

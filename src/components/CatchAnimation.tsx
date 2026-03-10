@@ -32,7 +32,7 @@ export default function CatchAnimation({ ballType, targetEmoji, success, onCompl
   const [stage, setStage] = useState<Stage>('throw');
   const [shakeCount] = useState(() => randInt(1, 3));
   const [currentShake, setCurrentShake] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ballColor = BALL_COLORS[ballType];
 
@@ -58,7 +58,7 @@ export default function CatchAnimation({ ballType, targetEmoji, success, onCompl
     } else if (stage === 'result') {
       timerRef.current = setTimeout(onComplete, 1400);
     }
-    return () => clearTimeout(timerRef.current);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [stage, currentShake, shakeCount, success, onComplete]);
 
   return (
