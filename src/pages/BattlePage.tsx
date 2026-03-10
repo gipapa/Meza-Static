@@ -504,8 +504,8 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
       {/* ── Messages ── */}
       <div className="text-center mb-3">
-        <div className="font-display text-sm py-2 px-4 rounded bg-primary/10 border border-primary/20">{message}</div>
-        {subMessage && <div className="text-xs text-text-muted mt-1">{subMessage}</div>}
+        <div className="font-display text-sm py-2 px-4 rounded bg-white text-gray-900 border border-gray-200 shadow-sm">{message}</div>
+        {subMessage && <div className="text-xs text-gray-500 mt-1">{subMessage}</div>}
         {effectLabel && <div className="text-sm font-display mt-1" style={{ color: effectColor }}>{effectLabel}</div>}
       </div>
 

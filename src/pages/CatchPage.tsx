@@ -160,18 +160,7 @@ export default function CatchPage() {
         {message}
       </div>
 
-      {/* Catch Gauge */}
-      {!isCatchNow && (
-        <div className="mb-6">
-          <div className="flex justify-between text-xs mb-1">
-            <span className="text-text-muted">捕獲計量表</span>
-            <span className="text-neon-cyan">{Math.round(catchGauge)}%</span>
-          </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full rounded-full bg-neon-cyan" style={{ width: `${catchGauge}%` }} />
-          </div>
-        </div>
-      )}
+
 
       {/* Phase: Target Selection (CatchNow only) */}
       {phase === 'last-select' && isCatchNow && (
