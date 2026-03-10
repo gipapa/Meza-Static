@@ -7,7 +7,8 @@ import { shuffle, randInt } from '../lib/rng';
 import TagCard from '../components/TagCard';
 import PhaserBallWheel from '../phaser/PhaserBallWheel';
 import PhaserCatchOverlay from '../phaser/PhaserCatchOverlay';
-import MultiCatchAnimation from '../components/MultiCatchAnimation';
+import PhaserMultiCatchOverlay from '../phaser/PhaserMultiCatchOverlay';
+import type { MultiCatchTarget } from '../phaser/MultiCatchScene';
 import { useNameReveal } from '../lib/nameMask';
 
 type Phase = 'last-select' | 'ball-wheel' | 'multi-catch' | 'catch-result' | 'bonus' | 'bonus-stop' | 'bonus-result' | 'done';
@@ -43,6 +44,7 @@ export default function CatchPage() {
 
   /* Multi-catch state (battle mode: throw at all 3 enemies) */
   const [multiResults, setMultiResults] = useState<{ tag: Tag; success: boolean }[]>([]);
+  const [multiTargets, setMultiTargets] = useState<MultiCatchTarget[]>([]);
   const [showMultiCatchAnim, setShowMultiCatchAnim] = useState(false);
   const bonusRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -99,6 +101,12 @@ export default function CatchPage() {
       const targets = enemies.slice(0, 3);
       const results = targets.map(tag => ({ tag, success: attemptCatch(ball, catchGauge) }));
       setMultiResults(results);
+      setMultiTargets(results.map(r => ({
+        emoji: TYPE_EMOJI[r.tag.types[0]] || '⚪',
+        name: dn(r.tag.name),
+        success: r.success,
+        shakeCount: randInt(1, 3),
+      })));
       setPhase('multi-catch');
       setMessage(`${BALL_NAMES[ball]}！向全部怪獸投擲中...`);
       setShowMultiCatchAnim(true);
@@ -198,8 +206,8 @@ export default function CatchPage() {
 
       {/* Phase: Multi-catch animation overlay */}
       {showMultiCatchAnim && ballType && (
-        <MultiCatchAnimation
-          targets={multiResults}
+        <PhaserMultiCatchOverlay
+          targets={multiTargets}
           ballType={ballType}
           onComplete={handleMultiCatchComplete}
         />
