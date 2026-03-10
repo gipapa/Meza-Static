@@ -107,7 +107,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const battleOverlayDoneRef = useRef<(() => void) | null>(null);
 
   /* Speed */
-  const [playerFirst, setPlayerFirst] = useState(true);
+  const [, setPlayerFirst] = useState(true);
   const playerFirstRef = useRef(true); // always sync with playerFirst to avoid stale closures
 
   /* Effectiveness */
