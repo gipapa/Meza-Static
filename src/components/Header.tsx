@@ -39,6 +39,18 @@ export default function Header() {
               <span>{item.label}</span>
             </Link>
           ))}
+          <Link
+            to="/settings"
+            aria-label="設定"
+            title="設定"
+            className={`px-2 py-1.5 rounded text-sm transition-all ${
+              location.pathname.startsWith('/settings')
+                ? 'bg-primary/20 text-primary-light'
+                : 'text-text-muted hover:text-text-primary hover:bg-bg-card'
+            }`}
+          >
+            ⚙️
+          </Link>
           <button
             onClick={handleToggleMute}
             className="ml-1 px-2 py-1.5 rounded text-sm text-text-muted hover:text-text-primary hover:bg-bg-card transition-all"

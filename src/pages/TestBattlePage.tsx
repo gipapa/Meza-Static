@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import MoveAnimationOverlay from '../phaser/MoveAnimationOverlay';
+import { getTagById } from '../data/monsters';
+import { useSettings } from '../lib/useSettings';
+import type { AnimationQuality } from '../lib/settings';
 import PhaserBattleOverlay from '../phaser/PhaserBattleOverlay';
 import PhaserBallWheel from '../phaser/PhaserBallWheel';
 import PhaserCatchOverlay from '../phaser/PhaserCatchOverlay';
@@ -206,6 +210,118 @@ export function TestCatchPage() {
       <div className="mt-4 bg-surface rounded-lg p-3 max-h-48 overflow-y-auto text-xs font-mono">
         <div className="text-text-muted mb-1">Log:</div>
         {log.length === 0 && <div className="text-text-muted">Waiting...</div>}
+        {log.map((l, i) => (
+          <div key={i} className="text-green-400">{l}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Advanced-animation test page: /#/test/cinematic
+ * Query params (for manual QA and automated checks):
+ *   quality=simple|advanced|setting  (default advanced)
+ *   side=ally|enemy                  (who uses 花瓣舞, default ally)
+ *   speed=1..20                      (playback speed, default 1)
+ */
+const PETAL_TAG: Tag = getTagById('045') ?? {
+  id: '045', name: '霸王花', grade: 4, types: ['grass', 'poison'], pe: 490,
+  stats: { hp: 75, atk: 80, def: 85, spd: 50 }, move: { name: '花瓣舞', type: 'grass', power: 120 }, flags: {},
+};
+
+function readQuery() {
+  const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
+  const quality = q.get('quality');
+  return {
+    quality: (quality === 'simple' || quality === 'setting' ? quality : 'advanced') as AnimationQuality | 'setting',
+    side: q.get('side') === 'enemy' ? 'enemy' : 'ally',
+    speed: Math.min(20, Math.max(0.25, Number(q.get('speed')) || 1)),
+  };
+}
+
+export function TestCinematicPage() {
+  const [opts, setOpts] = useState(readQuery);
+  const [key, setKey] = useState(0);
+  const [show, setShow] = useState(true);
+  const [phase, setPhase] = useState('—');
+  const [log, setLog] = useState<string[]>([]);
+  const settings = useSettings();
+  const started = useRef(0);
+
+  const addLog = (msg: string) => {
+    const t = ((performance.now() - started.current) / 1000).toFixed(1);
+    setLog(prev => [...prev, `[${t}s] ${msg}`]);
+  };
+
+  const restart = (patch: Partial<typeof opts>) => {
+    setOpts(o => ({ ...o, ...patch }));
+    setLog([]);
+    setPhase('—');
+    setKey(k => k + 1);
+    setShow(true);
+  };
+
+  useEffect(() => { started.current = performance.now(); }, [key]);
+
+  const isPlayer = opts.side === 'ally';
+  const ally = isPlayer ? PETAL_TAG : FIXED_ALLY;
+  const enemy = isPlayer ? FIXED_ENEMY : PETAL_TAG;
+  const effective = opts.quality === 'setting' ? settings.animationQuality : opts.quality;
+
+  const btn = (active: boolean) =>
+    `min-h-11 px-3 py-2 rounded-lg text-sm font-display border ${active ? 'border-neon-cyan bg-primary/30' : 'border-white/10 bg-bg-card'}`;
+
+  return (
+    <div className="p-4 sm:p-6 max-w-xl mx-auto">
+      <h1 className="text-2xl font-display text-primary-light mb-2">Cinematic Test — 花瓣舞</h1>
+      <p className="text-text-muted text-xs mb-4">
+        {isPlayer ? `我方 ${PETAL_TAG.name}（下方）→ 敵方 ${FIXED_ENEMY.name}` : `敵方 ${PETAL_TAG.name}（上方）→ 我方 ${FIXED_ALLY.name}`}，
+        damage=150。進階版約 60 秒，右上角可跳過。目前設定：{settings.animationQuality}
+      </p>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex flex-wrap gap-2">
+          {(['advanced', 'simple', 'setting'] as const).map(q => (
+            <button key={q} type="button" className={btn(opts.quality === q)} onClick={() => restart({ quality: q })}>
+              {q === 'advanced' ? '進階' : q === 'simple' ? '簡易' : '跟隨設定'}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={btn(isPlayer)} onClick={() => restart({ side: 'ally' })}>我方使用（↑）</button>
+          <button type="button" className={btn(!isPlayer)} onClick={() => restart({ side: 'enemy' })}>敵方使用（↓）</button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[1, 4, 10].map(s => (
+            <button key={s} type="button" className={btn(opts.speed === s)} onClick={() => restart({ speed: s })}>{s}×</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="text-sm mb-2">
+        實際播放：<span data-testid="variant" className="font-display text-neon-cyan">{effective}</span>
+        ・階段：<span data-testid="phase" className="font-display text-gold">{phase}</span>
+      </div>
+
+      {show && (
+        <MoveAnimationOverlay
+          key={key}
+          enemy={enemy}
+          ally={ally}
+          isPlayerAttacking={isPlayer}
+          moveType={PETAL_TAG.move.type}
+          moveName={PETAL_TAG.move.name}
+          damage={150}
+          quality={opts.quality === 'setting' ? undefined : opts.quality}
+          speed={opts.speed}
+          onPhase={(id, label) => { setPhase(id); addLog(`phase ${id}（${label}）`); }}
+          onComplete={() => { addLog('onComplete'); setShow(false); }}
+        />
+      )}
+
+      <div data-testid="log" className="mt-4 bg-surface rounded-lg p-3 max-h-64 overflow-y-auto text-xs font-mono">
+        <div className="text-text-muted mb-1">Log:</div>
         {log.map((l, i) => (
           <div key={i} className="text-green-400">{l}</div>
         ))}

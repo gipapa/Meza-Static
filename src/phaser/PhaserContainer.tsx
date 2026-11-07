@@ -43,6 +43,8 @@ export default function PhaserContainer<D extends object>({ config, scene, scene
       // Before boot this is queued and started with `payload` once ready.
       game.scene.add(key, SceneClass, true, payload);
       gameRef.current = game;
+      // Dev-only handle so automated tests can step frames deterministically.
+      if (import.meta.env.DEV) (window as unknown as { __mezaPhaserGame?: Phaser.Game }).__mezaPhaserGame = game;
     });
 
     return () => {

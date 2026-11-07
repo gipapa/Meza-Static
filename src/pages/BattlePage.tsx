@@ -6,7 +6,7 @@ import { shuffle, pick } from '../lib/rng';
 import { calcDamage, calcEnemyDamage, rollAttackRoulette } from '../lib/battle';
 import { getTypeMultiplier, getEffectivenessLabel, getEffectivenessColor } from '../lib/typeChart';
 import TagCard from '../components/TagCard';
-import PhaserBattleOverlay from '../phaser/PhaserBattleOverlay';
+import MoveAnimationOverlay from '../phaser/MoveAnimationOverlay';
 import TypeChartTable from '../components/TypeChartTable';
 import { playBGM, stopBGM } from '../lib/bgm';
 import { useNameReveal } from '../lib/nameMask';
@@ -588,7 +588,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
       {/* Battle Overlay Animation */}
       {battleOverlay && (
-        <PhaserBattleOverlay
+        <MoveAnimationOverlay
           enemy={battleOverlay.enemy}
           ally={battleOverlay.ally}
           isPlayerAttacking={battleOverlay.isPlayerAttacking}

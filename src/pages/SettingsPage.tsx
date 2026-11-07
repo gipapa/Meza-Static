@@ -1,10 +1,21 @@
 import { useState, useRef } from 'react';
 import { exportCollection, importCollection, clearAll } from '../lib/storage';
+import { updateSettings } from '../lib/settings';
+import type { AnimationQuality } from '../lib/settings';
+import { useSettings } from '../lib/useSettings';
+import { ADVANCED_MOVE_ANIMATIONS } from '../phaser/cinematic/moveAnimations';
+
+const QUALITY_OPTIONS: { value: AnimationQuality; label: string; desc: string }[] = [
+  { value: 'simple', label: '簡易', desc: '約 3 秒的短動畫，對戰節奏快。' },
+  { value: 'advanced', label: '進階', desc: '招式專屬的長演出（cut-in、蓄力、鏡頭運鏡），可隨時跳過。' },
+];
+const ADVANCED_MOVES = Object.keys(ADVANCED_MOVE_ANIMATIONS);
 
 export default function SettingsPage() {
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { animationQuality } = useSettings();
 
   const handleExport = () => {
     const data = exportCollection();
@@ -39,6 +50,34 @@ export default function SettingsPage() {
       <h1 className="font-display text-3xl text-center mb-8 neon-text">設定</h1>
 
       <div className="space-y-6">
+        {/* Attack animation quality */}
+        <div className="bg-bg-card rounded-xl p-5 border border-white/5">
+          <h2 className="font-display text-sm mb-2">🎬 攻擊動畫</h2>
+          <div role="radiogroup" aria-label="攻擊動畫" className="grid grid-cols-2 gap-2 mb-3">
+            {QUALITY_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={animationQuality === opt.value}
+                data-quality={opt.value}
+                onClick={() => updateSettings({ animationQuality: opt.value })}
+                className={`min-h-11 px-3 py-2 rounded-lg text-left border transition-all ${
+                  animationQuality === opt.value
+                    ? 'border-neon-cyan bg-primary/20 neon-border-cyan'
+                    : 'border-white/10 bg-bg-dark hover:bg-bg-card-hover'
+                }`}
+              >
+                <div className="font-display text-sm">{opt.label}{opt.value === 'simple' && <span className="text-text-muted text-xs">（預設）</span>}</div>
+                <div className="text-text-muted text-[11px] leading-snug mt-0.5">{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+          <p className="text-text-muted text-xs">
+            已有進階演出的招式：{ADVANCED_MOVES.join('、')}。其他招式在進階模式下仍使用簡易動畫。
+          </p>
+        </div>
+
         {/* Export */}
         <div className="bg-bg-card rounded-xl p-5 border border-white/5">
           <h2 className="font-display text-sm mb-2">📤 匯出收藏</h2>
@@ -95,7 +134,7 @@ export default function SettingsPage() {
             無商業用途。僅供教育和娛樂用途。
           </p>
           <p className="text-text-muted text-xs mt-2">
-            技術架構: React + TypeScript + Tailwind CSS + Vite
+            技術架構: React + TypeScript + Tailwind CSS + Vite + Phaser
           </p>
         </div>
       </div>
