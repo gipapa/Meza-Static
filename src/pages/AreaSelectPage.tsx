@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AREAS, getTagById, RENTAL_TAGS } from '../data/monsters';
 import { getCollection, getBattleReadyIds, getEffectiveTag } from '../lib/storage';
 import TagCard from '../components/TagCard';
+import StepDialog from '../components/StepDialog';
 import { useNameReveal } from '../lib/nameMask';
 
 export default function AreaSelectPage() {
@@ -38,7 +39,7 @@ export default function AreaSelectPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-8 pb-40">
       <h1 className="font-display text-3xl text-center mb-2 neon-text">選擇區域</h1>
       <p className="text-center text-text-muted mb-8">選擇一個區域進行探索</p>
 
@@ -73,6 +74,7 @@ export default function AreaSelectPage() {
 
       {/* Team Selection */}
       {area && (
+        <StepDialog title="下一步：選擇隊伍並進入對戰">
         <div className="bg-bg-card rounded-xl p-4 sm:p-6 neon-border">
           <h2 className="font-display text-lg mb-1">
             選擇你的隊伍 <span className="text-text-muted text-sm">({selectedTags.length}/3)</span>
@@ -86,23 +88,29 @@ export default function AreaSelectPage() {
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3 mb-6">
             {availableTags.slice(0, 12).map(tag => (
+              <button type="button" key={tag.id} aria-label={`選擇 ${dn(tag.name)}`} aria-pressed={selectedTags.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
               <TagCard
                 key={tag.id}
                 tag={tag}
                 size="fluid"
                 selected={selectedTags.includes(tag.id)}
-                onClick={() => toggleTag(tag.id)}
               />
+              </button>
             ))}
           </div>
+          <div className="sticky bottom-0 bg-bg-card pt-3 text-center">
+          <p role="status" className="text-sm mb-3">{selectedTags.length === 0 ? '下一步：選擇至少一隻怪獸加入隊伍' : `已選 ${selectedTags.length} 隻，按下方按鈕開始對戰`}</p>
           <button
             onClick={startBattle}
             disabled={selectedTags.length === 0}
-            className="px-6 py-2 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-display rounded-lg transition-all"
+            className="w-full max-w-md min-h-12 px-6 py-2 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-display rounded-lg transition-all"
           >
             ⚔️ 進入對戰
           </button>
+          <button type="button" onClick={() => setSelectedArea(null)} className="mt-2 min-h-11 px-4 text-sm text-text-muted">重新選擇區域</button>
+          </div>
         </div>
+        </StepDialog>
       )}
     </div>
   );

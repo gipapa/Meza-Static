@@ -6,6 +6,7 @@ import { shuffle, pick } from '../lib/rng';
 import { calcDamage, calcEnemyDamage, rollAttackRoulette } from '../lib/battle';
 import { getTypeMultiplier, getEffectivenessLabel, getEffectivenessColor } from '../lib/typeChart';
 import TagCard from '../components/TagCard';
+import StepDialog from '../components/StepDialog';
 import MoveAnimationOverlay from '../phaser/MoveAnimationOverlay';
 import TypeChartTable from '../components/TypeChartTable';
 import { playBGM, stopBGM } from '../lib/bgm';
@@ -442,7 +443,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
    *  RENDER
    * ================================================================ */
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 select-none">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 pb-64 select-none">
       {/* Top bar */}
       <div className="flex justify-between items-center mb-3">
         <div className="font-display text-sm">
@@ -509,7 +510,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
       {/* ── Roulette & Mash ── */}
       {(phase === 'roulette' || phase === 'mash' || phase === 'player-attack-anim') && (
-        <div className="flex justify-center gap-6 mb-4">
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-bg-dark border-t border-primary/40 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <p role="status" className="text-center text-sm font-display mb-3">{phase === 'roulette' ? '下一步：按「停止轉盤」，決定攻擊倍率' : phase === 'mash' ? '現在快速連打下方大按鈕！' : '攻擊演出中，請稍候…'}</p>
+          <div className="flex justify-center gap-4">
           <div className="text-center">
             <div className="text-xs text-text-muted mb-1 font-display">攻擊轉盤</div>
             <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-display border-2 border-primary ${phase === 'roulette' && rouletteValue === null ? 'roulette-spin border-accent' : ''}`}
@@ -517,7 +520,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
               {rouletteDisplay}
             </div>
             {phase === 'roulette' && rouletteValue === null && (
-              <button onClick={stopRoulette} className="mt-2 px-4 py-1 bg-accent text-white rounded font-display text-sm hover:bg-accent-light transition-all">停止！</button>
+              <button onClick={stopRoulette} className="mt-2 min-h-12 px-4 py-2 bg-accent text-white rounded font-display text-sm hover:bg-accent-light transition-all">停止轉盤！</button>
             )}
           </div>
           <div className="text-center">
@@ -527,7 +530,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
               onPointerDown={e => { e.preventDefault(); handleMash(); }}
               onContextMenu={e => e.preventDefault()}
               disabled={phase !== 'mash' || mashTimeLeft <= 0}
-              className={`touch-mash w-16 h-16 rounded-full font-display text-xl border-2 transition-all ${phase === 'mash' && mashTimeLeft > 0 ? 'bg-accent/20 border-accent text-accent mash-pulse cursor-pointer active:scale-90' : 'bg-white/5 border-white/10 text-text-muted cursor-not-allowed'}`}>
+              className={`touch-mash w-28 h-24 rounded-xl font-display text-xl border-2 transition-all ${phase === 'mash' && mashTimeLeft > 0 ? 'bg-accent/20 border-accent text-accent mash-pulse cursor-pointer active:scale-90' : 'bg-white/5 border-white/10 text-text-muted cursor-not-allowed'}`}>
               {mashCount}
             </button>
             {phase === 'mash' && <div className="mt-1 text-xs text-accent">{(mashTimeLeft / 1000).toFixed(1)}s</div>}
@@ -538,6 +541,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
             <div className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-display border-2 border-white/10 bg-white/5">
               {lastPlayerDmg > 0 ? <span className="text-accent catch-success">{lastPlayerDmg}</span> : <span className="text-text-muted">—</span>}
             </div>
+          </div>
           </div>
         </div>
       )}
@@ -550,6 +554,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
 
       {/* ── Ally Side ── */}
+      <StepDialog active={phase === 'select-attacker'} title="下一步：選擇一隻怪獸出戰">
       <div className="bg-bg-card rounded-xl p-3 sm:p-4 border border-white/5 relative">
         <div className="text-xs text-text-muted mb-2 font-display">你的隊伍 — 存活 {aliveAllies.length}/{allies.length}</div>
 
@@ -587,6 +592,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       </div>
 
       {/* Battle Overlay Animation */}
+      </StepDialog>
       {battleOverlay && (
         <MoveAnimationOverlay
           enemy={battleOverlay.enemy}
@@ -601,11 +607,12 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
       {/* Next Round */}
       {phase === 'round-result' && (
-        <div className="text-center mt-4">
-          <button onClick={nextRound} className="px-6 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg transition-all">
+        <StepDialog title="回合結束">
+          <p className="text-center text-sm mb-4">{message}</p>
+          <button onClick={nextRound} className="w-full min-h-12 px-6 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg transition-all">
             下一回合 →
           </button>
-        </div>
+        </StepDialog>
       )}
     </div>
   );

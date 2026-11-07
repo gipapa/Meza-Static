@@ -5,6 +5,7 @@ import { attemptCatch, BALL_NAMES } from '../lib/battle';
 import { ALL_TAGS, TYPE_EMOJI } from '../data/monsters';
 import { shuffle, randInt } from '../lib/rng';
 import TagCard from '../components/TagCard';
+import StepDialog from '../components/StepDialog';
 import PhaserBallWheel from '../phaser/PhaserBallWheel';
 import PhaserCatchOverlay from '../phaser/PhaserCatchOverlay';
 import PhaserMultiCatchOverlay from '../phaser/PhaserMultiCatchOverlay';
@@ -178,7 +179,7 @@ export default function CatchPage() {
 
       {/* Phase: Target Selection (CatchNow only) */}
       {phase === 'last-select' && isCatchNow && (
-        <div>
+        <StepDialog title="下一步：選擇捕獲目標">
           <p className="text-center text-text-muted text-sm mb-4">選擇一隻怪獸來捕獲：</p>
           <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto">
             {enemies.slice(0, 3).map(tag => (
@@ -193,15 +194,15 @@ export default function CatchPage() {
               </div>
             ))}
           </div>
-        </div>
+        </StepDialog>
       )}
 
       {/* Phase: Ball Wheel */}
       {phase === 'ball-wheel' && (
-        <div className="text-center">
-          <p className="text-text-muted text-sm mb-4">旋轉轉盤決定球種！</p>
+        <StepDialog title="下一步：轉動捕獲轉盤">
+          <p className="text-center text-text-muted text-sm mb-4">按下轉盤下方按鈕開始，再按停止，決定捕獲球種。</p>
           <PhaserBallWheel onResult={handleBallResult} />
-        </div>
+        </StepDialog>
       )}
 
       {/* Phase: Multi-catch animation overlay */}
@@ -215,6 +216,7 @@ export default function CatchPage() {
 
       {/* Phase: Catch Result */}
       {phase === 'catch-result' && (
+        <StepDialog title="捕獲結果：選擇下一步">
         <div className="text-center">
           {isCatchNow ? (
             /* Single-target result (CatchNow) */
@@ -256,24 +258,25 @@ export default function CatchPage() {
             {!isCatchNow && (
               <button
                 onClick={goToBonus}
-                className="px-4 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg text-sm"
+                className="min-h-12 px-4 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg text-sm"
               >
                 → 額外捕獲
               </button>
             )}
             <button
               onClick={goToResult}
-              className="px-4 py-2 bg-bg-card border border-white/10 text-text-primary font-display rounded-lg text-sm hover:bg-bg-card-hover"
+              className="min-h-12 px-4 py-2 bg-bg-card border border-white/10 text-text-primary font-display rounded-lg text-sm hover:bg-bg-card-hover"
             >
               → 查看結果
             </button>
           </div>
         </div>
+        </StepDialog>
       )}
 
       {/* Phase: Bonus Catch (Grass Grid) */}
       {(phase === 'bonus' || phase === 'bonus-stop') && (
-        <div className="text-center">
+        <div className="text-center pb-36">
           <p className="text-text-muted text-sm mb-4">在草叢上停下游標！</p>
           <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto mb-4">
             {bonusGrid.map((tag, i) => (
@@ -291,18 +294,22 @@ export default function CatchPage() {
             ))}
           </div>
           {phase === 'bonus' && !bonusStopped && (
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-bg-dark border-t border-primary/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <p className="text-sm mb-3">下一步：按停止，選定亮起的草叢！</p>
             <button
               onClick={stopBonus}
-              className="px-6 py-2 bg-neon-green/80 text-bg-dark font-display rounded-lg hover:bg-neon-green transition-all"
+              className="w-full max-w-md min-h-12 px-6 py-2 bg-neon-green/80 text-bg-dark font-display rounded-lg hover:bg-neon-green transition-all"
             >
               停止！
             </button>
+            </div>
           )}
         </div>
       )}
 
       {/* Phase: Bonus Result */}
       {phase === 'bonus-result' && (
+        <StepDialog title="額外捕獲結果">
         <div className="text-center">
           {bonusCaught ? (
             <div className="catch-success">
@@ -318,11 +325,12 @@ export default function CatchPage() {
           )}
           <button
             onClick={goToResult}
-            className="mt-6 px-6 py-2 bg-accent text-white font-display rounded-lg hover:bg-accent-light"
+            className="mt-6 w-full min-h-12 px-6 py-2 bg-accent text-white font-display rounded-lg hover:bg-accent-light"
           >
             → 查看結果
           </button>
         </div>
+        </StepDialog>
       )}
 
       {/* Catch animation overlay (Phaser) */}

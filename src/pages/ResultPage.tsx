@@ -43,7 +43,7 @@ export default function ResultPage() {
   const hasSpecial = caughtTags.some(t => t.grade >= 5);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 text-center">
+    <div className="max-w-3xl mx-auto px-4 py-12 pb-48 text-center">
       <h1 className="font-display text-3xl mb-2 neon-text">結果</h1>
 
       {caughtTags.length === 0 ? (
@@ -81,7 +81,9 @@ export default function ResultPage() {
         </>
       )}
 
-      <div className="flex flex-wrap justify-center gap-3 mt-8">
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-bg-dark border-t border-primary/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <p className="text-sm mb-3">下一步：再玩一次，或前往收藏查看怪獸</p>
+        <div className="flex flex-wrap justify-center gap-3 [&>a]:min-h-12 [&>a]:flex [&>a]:items-center">
         <Link
           to="/play"
           className="px-6 py-2 bg-accent hover:bg-accent-light text-white font-display rounded-lg transition-all"
@@ -94,6 +96,7 @@ export default function ResultPage() {
         >
           📦 查看收藏
         </Link>
+        </div>
       </div>
     </div>
   );
