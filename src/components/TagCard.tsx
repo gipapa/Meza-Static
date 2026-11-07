@@ -6,7 +6,8 @@ import { useNameReveal } from '../lib/nameMask';
 interface Props {
   tag: Tag;
   onClick?: () => void;
-  size?: 'sm' | 'md' | 'lg';
+  /** 'fluid' fills its grid cell (7:10 ratio, capped at md width) — use in 3-up rows on phones. */
+  size?: 'sm' | 'md' | 'lg' | 'fluid';
   showBack?: boolean;
   selected?: boolean;
   className?: string;
@@ -31,7 +32,9 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
     sm: 'w-28 h-40',
     md: 'w-36 h-52',
     lg: 'w-48 h-68',
+    fluid: 'w-full max-w-36 aspect-[7/10] mx-auto',
   };
+  const fluid = size === 'fluid';
 
   return (
     <div
@@ -57,24 +60,24 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
           {/* Central Art Area */}
           <div className="flex-1 flex items-center justify-center">
             <div
-              className="text-4xl sm:text-5xl"
+              className={fluid ? 'text-3xl sm:text-5xl' : 'text-4xl sm:text-5xl'}
               style={{ filter: `drop-shadow(0 0 8px ${typeColor})` }}
             >
               {TYPE_EMOJI[primaryType] || '⚪'}
             </div>
           </div>
           {/* Name & Type */}
-          <div className="mt-auto">
+          <div className="mt-auto min-w-0">
             <div className="font-display text-xs truncate">{dn(tag.name)}</div>
-            <div className="flex items-center gap-1 mt-0.5">
+            <div className={`flex items-center gap-1 mt-0.5 ${fluid ? 'flex-wrap gap-0.5' : ''}`}>
               {tag.types.map(t => (
-                <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                <span key={t} className={`text-[10px] py-0.5 rounded-full font-medium whitespace-nowrap ${fluid ? 'px-1' : 'px-1.5'}`}
                   style={{ background: `${TYPE_COLORS[t]}33`, color: TYPE_COLORS[t] }}>
                   {TYPE_NAMES_ZH[t] || t}
                 </span>
               ))}
             </div>
-            <div className="text-[10px] text-text-muted mt-0.5">PE {tag.pe}</div>
+            <div className={`text-[10px] text-text-muted mt-0.5 ${fluid ? 'hidden sm:block' : ''}`}>PE {tag.pe}</div>
           </div>
           {/* Flags */}
           {tag.flags.legendary && (

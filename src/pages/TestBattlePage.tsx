@@ -37,20 +37,27 @@ export function TestBattlePage() {
   const [showOverlay, setShowOverlay] = useState(true);
   const [log, setLog] = useState<string[]>([]);
   const [key, setKey] = useState(0);
+  // Default from ?side=enemy so both directions can be opened directly.
+  const [playerAttacking, setPlayerAttacking] = useState(
+    () => !window.location.hash.includes('side=enemy'),
+  );
 
   const addLog = (msg: string) =>
     setLog((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const handleComplete = () => {
-    addLog('onComplete fired — animation finished!');
+    addLog(`onComplete fired — ${playerAttacking ? 'ally' : 'enemy'} attack finished!`);
     setShowOverlay(false);
   };
 
-  const restart = () => {
+  const restart = (isPlayer: boolean) => {
     setLog([]);
+    setPlayerAttacking(isPlayer);
     setKey((k) => k + 1);
     setShowOverlay(true);
   };
+
+  const attacker = playerAttacking ? FIXED_ALLY : FIXED_ENEMY;
 
   return (
     <div className="p-6 max-w-xl mx-auto">
@@ -58,24 +65,36 @@ export function TestBattlePage() {
         Battle Animation Test
       </h1>
       <p className="text-text-muted text-sm mb-4">
-        Fixed data: {FIXED_ALLY.name} (dragon) vs {FIXED_ENEMY.name} (fire), damage=150
+        Fixed data: {FIXED_ALLY.name} (dragon, 我方/下方) vs {FIXED_ENEMY.name} (fire, 敵方/上方), damage=150
+      </p>
+      <p className="text-text-muted text-xs mb-4">
+        預期：上方永遠是敵方 🔥 + {FIXED_ENEMY.name}，下方永遠是我方 🐉 + {FIXED_ALLY.name}；
+        我方攻擊由下往上，敵方攻擊由上往下。
       </p>
 
-      <button
-        onClick={restart}
-        className="px-4 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg mb-4"
-      >
-        Restart Animation
-      </button>
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => restart(true)}
+          className="px-4 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg"
+        >
+          我方攻擊（↑）
+        </button>
+        <button
+          onClick={() => restart(false)}
+          className="px-4 py-2 bg-accent hover:bg-accent-light text-white font-display rounded-lg"
+        >
+          敵方攻擊（↓）
+        </button>
+      </div>
 
       {showOverlay && (
         <PhaserBattleOverlay
           key={key}
           enemy={FIXED_ENEMY}
           ally={FIXED_ALLY}
-          isPlayerAttacking={true}
-          moveType="dragon"
-          moveName="Cosmic Roar"
+          isPlayerAttacking={playerAttacking}
+          moveType={attacker.move.type}
+          moveName={attacker.move.name}
           damage={150}
           onComplete={handleComplete}
         />

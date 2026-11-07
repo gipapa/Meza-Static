@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { BallType } from '../types';
+import TimedScene from './TimedScene';
 
 /* ────────────────────────────────────────────────────────────────────
  *  MultiCatchScene — Phaser 3 scene: throw 3 balls at 3 monsters
@@ -29,25 +30,21 @@ const BALL_CFG: Record<BallType, { emoji: string; color: number; colorStr: strin
   master: { emoji: '🟣', color: 0x8b5cf6, colorStr: '#8B5CF6' },
 };
 
-/* ── Module-level data hand-off ── */
-let _pendingData: MultiCatchSceneData | null = null;
-export function setMultiCatchSceneData(data: MultiCatchSceneData) {
-  _pendingData = data;
-}
+export const MULTI_CATCH_SCENE_KEY = 'MultiCatchScene';
 
-const at = (ms: number, fn: () => void) => setTimeout(fn, ms);
-
-export default class MultiCatchScene extends Phaser.Scene {
+export default class MultiCatchScene extends TimedScene {
   private d!: MultiCatchSceneData;
   private W = 0;
   private H = 0;
 
   constructor() {
-    super({ key: 'MultiCatchScene' });
+    super({ key: MULTI_CATCH_SCENE_KEY });
   }
 
-  create() {
-    if (_pendingData) this.d = _pendingData;
+  create(data: MultiCatchSceneData) {
+    if (!data?.targets?.length) return;
+    this.d = data;
+    this.initTimeline();
     this.W = Number(this.game.config.width);
     this.H = Number(this.game.config.height);
 
@@ -77,7 +74,7 @@ export default class MultiCatchScene extends Phaser.Scene {
     this.d.targets.forEach((target, i) => {
       const cx = colW * i + colW / 2;
       const cy = this.H * 0.38;
-      this.createColumn(cx, cy, target, bc, maxShakes, i);
+      this.createColumn(cx, cy, target, bc, maxShakes);
     });
 
     /* onComplete after all animations finish */
@@ -85,7 +82,7 @@ export default class MultiCatchScene extends Phaser.Scene {
     const shakeDuration = 700;
     const resultMs = shakeStartMs + maxShakes * shakeDuration + 200;
     const endMs = resultMs + 1600;
-    at(endMs, () => this.d.onComplete());
+    this.at(endMs, () => this.d.onComplete());
   }
 
   private createColumn(
@@ -93,7 +90,6 @@ export default class MultiCatchScene extends Phaser.Scene {
     target: MultiCatchTarget,
     bc: { emoji: string; color: number; colorStr: string },
     maxShakes: number,
-    _idx: number,
   ) {
     /* ── Monster emoji ── */
     const monster = this.add.text(cx, cy - 30, target.emoji, {
@@ -145,7 +141,7 @@ export default class MultiCatchScene extends Phaser.Scene {
     });
 
     /* ═══ Stage 2: ABSORB (600ms→1200ms) ═══ */
-    at(600, () => {
+    this.at(600, () => {
       statusText.setText('吸入！');
       statusText.setColor(bc.colorStr);
 
@@ -172,7 +168,7 @@ export default class MultiCatchScene extends Phaser.Scene {
     });
 
     /* ═══ Stage 3: SETTLE (1200ms→1800ms) ═══ */
-    at(1200, () => {
+    this.at(1200, () => {
       statusText.setText('');
       this.tweens.add({ targets: shadow, alpha: 1, duration: 250 });
       this.tweens.add({
@@ -190,7 +186,7 @@ export default class MultiCatchScene extends Phaser.Scene {
 
     for (let s = 0; s < target.shakeCount; s++) {
       const startMs = shakeStartMs + s * shakeDuration;
-      at(startMs, () => {
+      this.at(startMs, () => {
         statusText.setText('● '.repeat(s + 1) + '○ '.repeat(target.shakeCount - s - 1));
         statusText.setColor('#94a3b8');
 
@@ -220,7 +216,7 @@ export default class MultiCatchScene extends Phaser.Scene {
     /* ═══ Stage 5: RESULT ═══ */
     const resultMs = shakeStartMs + maxShakes * shakeDuration + 200;
 
-    at(resultMs, () => {
+    this.at(resultMs, () => {
       statusText.setText('● '.repeat(target.shakeCount));
 
       if (target.success) {
@@ -322,7 +318,7 @@ export default class MultiCatchScene extends Phaser.Scene {
     });
     breakEmitter.explode(10);
 
-    at(180, () => {
+    this.at(180, () => {
       monster.setPosition(cx, cy - 20);
       this.tweens.add({
         targets: monster,
@@ -337,7 +333,7 @@ export default class MultiCatchScene extends Phaser.Scene {
       });
     });
 
-    at(550, () => {
+    this.at(550, () => {
       this.tweens.add({
         targets: monster,
         x: cx + 60, y: cy - 50, alpha: 0,

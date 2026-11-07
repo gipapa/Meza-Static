@@ -73,7 +73,7 @@ export default function AreaSelectPage() {
 
       {/* Team Selection */}
       {area && (
-        <div className="bg-bg-card rounded-xl p-6 neon-border">
+        <div className="bg-bg-card rounded-xl p-4 sm:p-6 neon-border">
           <h2 className="font-display text-lg mb-1">
             選擇你的隊伍 <span className="text-text-muted text-sm">({selectedTags.length}/3)</span>
           </h2>
@@ -84,12 +84,12 @@ export default function AreaSelectPage() {
                 ? `顯示 ${battleReadyTags.length} 隻出戰標記的怪獸（可在收藏頁管理）`
                 : `從你的 ${collection.length} 張卡牌中選擇最多 3 隻。（提示：在收藏頁標記「出戰」可篩選常用怪獸）`}
           </p>
-          <div className="flex flex-wrap gap-3 mb-6">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3 mb-6">
             {availableTags.slice(0, 12).map(tag => (
               <TagCard
                 key={tag.id}
                 tag={tag}
-                size="sm"
+                size="fluid"
                 selected={selectedTags.includes(tag.id)}
                 onClick={() => toggleTag(tag.id)}
               />

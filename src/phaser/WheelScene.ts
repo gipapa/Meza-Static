@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { BallType } from '../types';
+import TimedScene from './TimedScene';
 
 /* ────────────────────────────────────────────────────────────────────
  *  WheelScene — Phaser 3 scene for the ball roulette wheel
@@ -38,15 +39,9 @@ function rollBall(): BallType {
   return 'master';
 }
 
-/* ── Module-level data hand-off ── */
-let _pendingData: WheelSceneData | null = null;
+export const WHEEL_SCENE_KEY = 'WheelScene';
 
-/** Call this BEFORE creating the Phaser.Game that uses WheelScene. */
-export function setWheelSceneData(data: WheelSceneData) {
-  _pendingData = data;
-}
-
-export default class WheelScene extends Phaser.Scene {
+export default class WheelScene extends TimedScene {
   private data_!: WheelSceneData;
   private W = 0;
   private H = 0;
@@ -62,13 +57,13 @@ export default class WheelScene extends Phaser.Scene {
   private btnBg!: Phaser.GameObjects.Graphics;
 
   constructor() {
-    super({ key: 'WheelScene' });
+    super({ key: WHEEL_SCENE_KEY });
   }
 
-  create() {
-    if (_pendingData) {
-      this.data_ = _pendingData;
-    }
+  create(data: WheelSceneData) {
+    if (!data?.onResult) return;
+    this.data_ = data;
+    this.initTimeline();
     this.W = Number(this.game.config.width);
     this.H = Number(this.game.config.height);
     const cx = this.W / 2;
@@ -331,9 +326,8 @@ export default class WheelScene extends Phaser.Scene {
     });
 
     // Delay then callback
-    setTimeout(() => {
-      this.data_.onResult(this.resultBall!);
-    }, 800);
+    const ball = this.resultBall;
+    this.at(800, () => this.data_.onResult(ball));
   }
 
   private drawButton(g: Phaser.GameObjects.Graphics, x: number, y: number, _label: string, color: number) {

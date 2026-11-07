@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import TimedScene from './TimedScene';
 
 /* ────────────────────────────────────────────────────────────────────
  *  BattleScene — Phaser 3 scene that replaces BattleOverlayAnimation
@@ -10,19 +11,44 @@ import Phaser from 'phaser';
  *  - Damage numbers with physics-based pop
  *  ──────────────────────────────────────────────────────────────────── */
 
-/** Data passed via scene init() */
+export interface BattleCombatant {
+  name: string;
+  emoji: string;
+}
+
+/**
+ * Data passed to create(data).
+ *
+ * Positions are fixed by side, never by role: `enemy` is always drawn at the
+ * top and `ally` always at the bottom. `isPlayerAttacking` only decides which
+ * of the two moves and in which direction.
+ */
 export interface BattleSceneData {
+  enemy: BattleCombatant;
+  ally: BattleCombatant;
   isPlayerAttacking: boolean;
   moveType: string;
   moveName: string;
   damage: number;
-  attackerName: string;
-  defenderName: string;
-  attackerEmoji: string;
-  defenderEmoji: string;
   typeColor: string; // hex like '#F97316'
   onComplete: () => void;
 }
+
+export interface BattleLayout {
+  attackerY: number;
+  defenderY: number;
+  /** -1 = attacker moves up (ally → enemy), +1 = moves down (enemy → ally). */
+  dir: -1 | 1;
+}
+
+/** Pure layout rule shared by the scene (and easy to verify in isolation). */
+export function resolveBattleLayout(isPlayerAttacking: boolean, enemyY: number, allyY: number): BattleLayout {
+  return isPlayerAttacking
+    ? { attackerY: allyY, defenderY: enemyY, dir: -1 }
+    : { attackerY: enemyY, defenderY: allyY, dir: 1 };
+}
+
+export const BATTLE_SCENE_KEY = 'BattleScene';
 
 /* ── Type-specific projectile configs ── */
 
@@ -72,33 +98,21 @@ function hexToInt(hex: string): number {
   return parseInt(hex.replace('#', ''), 16);
 }
 
-/* ── Module-level data hand-off ── */
-let _pendingData: BattleSceneData | null = null;
-
-/** Call this BEFORE creating the Phaser.Game that uses BattleScene. */
-export function setBattleSceneData(data: BattleSceneData) {
-  _pendingData = data;
-}
-
 /* ── Scene ── */
 
-export default class BattleScene extends Phaser.Scene {
-  private data_!: BattleSceneData;
+export default class BattleScene extends TimedScene {
   private W = 0;
   private H = 0;
 
   constructor() {
-    super({ key: 'BattleScene' });
+    super({ key: BATTLE_SCENE_KEY });
   }
 
-  create() {
-    if (_pendingData) {
-      this.data_ = _pendingData;
-    }
-    if (!this.data_) return;
-    const { isPlayerAttacking, moveType, moveName, damage,
-            attackerName, defenderName, attackerEmoji, defenderEmoji,
-            typeColor, onComplete } = this.data_;
+  create(data: BattleSceneData) {
+    if (!data?.enemy || !data?.ally) return;
+    this.initTimeline();
+    const { enemy, ally, isPlayerAttacking, moveType, moveName, damage,
+            typeColor, onComplete } = data;
 
     this.W = Number(this.game.config.width);
     this.H = Number(this.game.config.height);
@@ -126,26 +140,20 @@ export default class BattleScene extends Phaser.Scene {
     // enemy always top, ally always bottom
     const enemyY = 80;
     const allyY = this.H - 100;
-    const attackerY = isPlayerAttacking ? allyY : enemyY;
-    const defenderY = isPlayerAttacking ? enemyY : allyY;
+    const { attackerY, defenderY, dir } = resolveBattleLayout(isPlayerAttacking, enemyY, allyY);
 
-    /* ── Sprites (emoji text objects) ── */
-    const atkSprite = this.add.text(cx, attackerY, isPlayerAttacking ? attackerEmoji : defenderEmoji, {
-      fontSize: '48px',
-    }).setOrigin(0.5);
+    /* ── Sprites (emoji text objects) — drawn by side, not by role ── */
+    const spriteStyle = { fontSize: '48px' };
+    const labelStyle = { fontSize: '14px', fontFamily: '"Russo One", sans-serif', color: '#e2e8f0' };
 
-    const defSprite = this.add.text(cx, defenderY, isPlayerAttacking ? defenderEmoji : attackerEmoji, {
-      fontSize: '48px',
-    }).setOrigin(0.5);
+    const enemySprite = this.add.text(cx, enemyY, enemy.emoji, spriteStyle).setOrigin(0.5);
+    const allySprite = this.add.text(cx, allyY, ally.emoji, spriteStyle).setOrigin(0.5);
+    const enemyLabel = this.add.text(cx, enemyY + 38, enemy.name, labelStyle).setOrigin(0.5);
+    const allyLabel = this.add.text(cx, allyY + 38, ally.name, labelStyle).setOrigin(0.5);
 
-    /* ── Name labels ── */
-    const atkLabel = this.add.text(cx, attackerY + 38, attackerName, {
-      fontSize: '14px', fontFamily: '"Russo One", sans-serif', color: '#e2e8f0',
-    }).setOrigin(0.5);
-
-    const defLabel = this.add.text(cx, defenderY + 38, defenderName, {
-      fontSize: '14px', fontFamily: '"Russo One", sans-serif', color: '#e2e8f0',
-    }).setOrigin(0.5);
+    const [atkSprite, defSprite] = isPlayerAttacking ? [allySprite, enemySprite] : [enemySprite, allySprite];
+    const [atkLabel, defLabel] = isPlayerAttacking ? [allyLabel, enemyLabel] : [enemyLabel, allyLabel];
+    const attackerName = isPlayerAttacking ? ally.name : enemy.name;
 
     /* ── Move name display ── */
     const moveText = this.add.text(cx, this.H / 2 + 60, `${attackerName} 使用了 ${moveName}！`, {
@@ -178,8 +186,8 @@ export default class BattleScene extends Phaser.Scene {
       emitting: false,
     });
 
-    /* ── Animation sequence ── */
-    const at = (ms: number, fn: () => void) => setTimeout(fn, ms);
+    /* ── Animation sequence (cancellable timeline from TimedScene) ── */
+    const at = (ms: number, fn: () => void) => this.at(ms, fn);
 
     /* 1. INTRO — fade in */
     this.tweens.add({ targets: [atkSprite, defSprite, atkLabel, defLabel], alpha: { from: 0, to: 1 }, duration: 350, ease: 'Power2' });
@@ -194,7 +202,7 @@ export default class BattleScene extends Phaser.Scene {
 
     /* 3. LUNGE — attacker moves toward defender (at 750ms) */
     at(750, () => {
-      const lungeY = attackerY + (isPlayerAttacking ? -60 : 60);
+      const lungeY = attackerY + dir * 60;
       this.tweens.add({
         targets: atkSprite,
         y: lungeY,

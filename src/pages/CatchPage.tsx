@@ -164,7 +164,7 @@ export default function CatchPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
       <h1 className="font-display text-2xl text-center mb-2 neon-text">
         {isCatchNow ? '快速捕獲' : '捕獲時間'}
       </h1>
@@ -180,13 +180,13 @@ export default function CatchPage() {
       {phase === 'last-select' && isCatchNow && (
         <div>
           <p className="text-center text-text-muted text-sm mb-4">選擇一隻怪獸來捕獲：</p>
-          <div className="flex justify-center gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto">
             {enemies.slice(0, 3).map(tag => (
-              <div key={tag.id} className="text-center">
-                <TagCard tag={tag} size="md" onClick={() => selectTarget(tag)} />
+              <div key={tag.id} className="text-center min-w-0">
+                <TagCard tag={tag} size="fluid" onClick={() => selectTarget(tag)} />
                 <button
                   onClick={() => selectTarget(tag)}
-                  className="mt-2 px-3 py-1 text-xs bg-neon-cyan/20 text-neon-cyan rounded hover:bg-neon-cyan/30 font-display"
+                  className="mt-2 w-full max-w-36 min-h-11 px-3 py-2 text-sm bg-neon-cyan/20 text-neon-cyan rounded hover:bg-neon-cyan/30 font-display"
                 >
                   目標
                 </button>
@@ -238,10 +238,10 @@ export default function CatchPage() {
                   : multiResults.some(r => r.success) ? '🎉'
                   : '💨'}
               </div>
-              <div className="flex justify-center gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto mb-4">
                 {multiResults.map(r => (
-                  <div key={r.tag.id} className="text-center relative">
-                    <TagCard tag={r.tag} size="md" className={!r.success ? 'opacity-40 grayscale' : ''} />
+                  <div key={r.tag.id} className="text-center relative min-w-0">
+                    <TagCard tag={r.tag} size="fluid" className={!r.success ? 'opacity-40 grayscale' : ''} />
                     <div className="mt-1 font-display text-xs">
                       {r.success
                         ? <span className="text-neon-green">捕獲成功 ✅</span>

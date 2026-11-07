@@ -273,7 +273,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   };
 
   /* ── Player attack ── */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const doPlayerAttack = () => {
     if (allyIdx === null || rouletteValue === null) return;
     const ally = allies[allyIdx];
@@ -304,7 +303,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       });
       setTimeout(() => {
         if (newHp <= 0) {
-          handleMonFainted('enemy', newHp);
+          handleMonFainted('enemy');
         } else if (!playerFirstRef.current) {
           afterBothAttacked();
         } else {
@@ -319,7 +318,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   };
 
   /* ── Enemy attack ── */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const doEnemyAttack = () => {
     if (allyIdx === null) return;
     const ally = allies[allyIdx];
@@ -350,7 +348,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       });
       setTimeout(() => {
         if (newHp <= 0) {
-          handleMonFainted('ally', newHp);
+          handleMonFainted('ally');
         } else if (playerFirstRef.current) {
           afterBothAttacked();
         } else {
@@ -367,7 +365,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   };
 
   /* ── Mon fainted ── */
-  const handleMonFainted = (who: 'ally' | 'enemy', _newHp?: number) => {
+  const handleMonFainted = (who: 'ally' | 'enemy') => {
     if (who === 'enemy') {
       setMessage(`${dn(enemies[enemyIdx].tag.name)} 被擊敗了！`);
     } else if (allyIdx !== null) {
@@ -444,7 +442,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
    *  RENDER
    * ================================================================ */
   return (
-    <div className="max-w-5xl mx-auto px-4 py-4 select-none">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 select-none">
       {/* Top bar */}
       <div className="flex justify-between items-center mb-3">
         <div className="font-display text-sm">
@@ -470,7 +468,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       )}
 
       {/* ── Enemy Side ── */}
-      <div className="bg-bg-card rounded-xl p-4 mb-3 border border-white/5 relative">
+      <div className="bg-bg-card rounded-xl p-3 sm:p-4 mb-3 border border-white/5 relative">
         <div className="text-xs text-text-muted mb-2 font-display">敵方隊伍 — 存活 {aliveEnemies.length}/{enemies.length}</div>
 
         {/* Enemy bench */}
@@ -524,8 +522,12 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
           </div>
           <div className="text-center">
             <div className="text-xs text-text-muted mb-1 font-display">連打！</div>
-            <button onClick={handleMash} disabled={phase !== 'mash' || mashTimeLeft <= 0}
-              className={`w-16 h-16 rounded-full font-display text-xl border-2 transition-all ${phase === 'mash' && mashTimeLeft > 0 ? 'bg-accent/20 border-accent text-accent mash-pulse cursor-pointer active:scale-90' : 'bg-white/5 border-white/10 text-text-muted cursor-not-allowed'}`}>
+            <button
+              type="button"
+              onPointerDown={e => { e.preventDefault(); handleMash(); }}
+              onContextMenu={e => e.preventDefault()}
+              disabled={phase !== 'mash' || mashTimeLeft <= 0}
+              className={`touch-mash w-16 h-16 rounded-full font-display text-xl border-2 transition-all ${phase === 'mash' && mashTimeLeft > 0 ? 'bg-accent/20 border-accent text-accent mash-pulse cursor-pointer active:scale-90' : 'bg-white/5 border-white/10 text-text-muted cursor-not-allowed'}`}>
               {mashCount}
             </button>
             {phase === 'mash' && <div className="mt-1 text-xs text-accent">{(mashTimeLeft / 1000).toFixed(1)}s</div>}
@@ -548,7 +550,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
 
 
       {/* ── Ally Side ── */}
-      <div className="bg-bg-card rounded-xl p-4 border border-white/5 relative">
+      <div className="bg-bg-card rounded-xl p-3 sm:p-4 border border-white/5 relative">
         <div className="text-xs text-text-muted mb-2 font-display">你的隊伍 — 存活 {aliveAllies.length}/{allies.length}</div>
 
         {/* Active ally */}
@@ -563,21 +565,21 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
           </div>
         )}
 
-        {/* Ally bench / selection */}
-        <div className="flex justify-center gap-4">
+        {/* Ally bench / selection — 3-up grid that shrinks to fit phone widths */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-md mx-auto">
           {allies.map((a, i) => (
-            <div key={a.tag.id} className="text-center">
+            <div key={a.tag.id} className="text-center min-w-0">
               <TagCard
                 tag={a.tag}
-                size="sm"
+                size="fluid"
                 selected={allyIdx === i}
                 onClick={() => selectAttacker(i)}
                 className={`${a.fainted ? 'opacity-30 grayscale pointer-events-none' : ''} ${phase === 'select-attacker' && !a.fainted ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
               />
-              <div className="mt-1">{hpBar(a, 'w-28')}</div>
+              <div className="mt-1">{hpBar(a, 'w-full max-w-36')}</div>
               {a.fainted && <div className="text-xs text-accent mt-0.5">退場</div>}
               {phase === 'select-attacker' && !a.fainted && (
-                <button onClick={() => selectAttacker(i)} className="mt-1 px-3 py-1 text-xs bg-primary/20 text-primary-light rounded hover:bg-primary/40 font-display transition-all">出戰！</button>
+                <button onClick={() => selectAttacker(i)} className="mt-1 w-full max-w-36 min-h-11 px-3 py-2 text-sm bg-primary/20 text-primary-light rounded hover:bg-primary/40 font-display transition-all">出戰！</button>
               )}
             </div>
           ))}

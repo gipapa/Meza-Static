@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import Phaser from 'phaser';
 import PhaserContainer from './PhaserContainer';
-import BattleScene, { setBattleSceneData } from './BattleScene';
+import BattleScene, { BATTLE_SCENE_KEY } from './BattleScene';
 import type { BattleSceneData } from './BattleScene';
 import type { Tag } from '../types';
 import { TYPE_COLORS, TYPE_EMOJI } from '../data/monsters';
@@ -17,6 +17,15 @@ interface Props {
   onComplete: () => void;
 }
 
+const CONFIG = {
+  type: Phaser.AUTO,
+  width: 320,
+  height: 400,
+  transparent: false,
+  banner: false,
+  audio: { noAudio: true },
+} as const;
+
 /**
  * Drop-in replacement for BattleOverlayAnimation.
  * Renders a Phaser canvas inside a full-screen overlay with
@@ -27,46 +36,23 @@ export default function PhaserBattleOverlay({
 }: Props) {
   const { dn } = useNameReveal();
 
-  const attacker = isPlayerAttacking ? ally : enemy;
-  const defender = isPlayerAttacking ? enemy : ally;
-  const typeColor = TYPE_COLORS[moveType] || '#A78BFA';
-  const attackerEmoji = TYPE_EMOJI[attacker.types[0]] || '⚪';
-  const defenderEmoji = TYPE_EMOJI[defender.types[0]] || '⚪';
-
-  // Set data before Phaser game is created (module-level hand-off)
-  const sceneData: BattleSceneData = useMemo(() => {
-    const data: BattleSceneData = {
-      isPlayerAttacking,
-      moveType,
-      moveName,
-      damage,
-      attackerName: dn(attacker.name),
-      defenderName: dn(defender.name),
-      attackerEmoji,
-      defenderEmoji,
-      typeColor,
-      onComplete,
-    };
-    setBattleSceneData(data);
-    return data;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const config = useMemo(() => ({
-    type: Phaser.AUTO,
-    width: 320,
-    height: 400,
-    transparent: false,
-    banner: false,
-    audio: { noAudio: true },
-    scene: [BattleScene],
+  // Pass both sides as-is (enemy = top, ally = bottom). The scene decides who
+  // moves from `isPlayerAttacking`; no attacker/defender swapping here.
+  const sceneData: BattleSceneData = useMemo(() => ({
+    enemy: { name: dn(enemy.name), emoji: TYPE_EMOJI[enemy.types[0]] || '⚪' },
+    ally: { name: dn(ally.name), emoji: TYPE_EMOJI[ally.types[0]] || '⚪' },
+    isPlayerAttacking,
+    moveType,
+    moveName,
+    damage,
+    typeColor: TYPE_COLORS[moveType] || '#A78BFA',
+    onComplete,
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  void sceneData; // used for side-effect in useMemo
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-        <PhaserContainer config={config} />
+        <PhaserContainer config={CONFIG} scene={BattleScene} sceneKey={BATTLE_SCENE_KEY} data={sceneData} />
       </div>
     </div>
   );

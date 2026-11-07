@@ -17,7 +17,7 @@ import { TestBattlePage, TestWheelPage, TestCatchPage } from './pages/TestBattle
 export default function App() {
   return (
     <HashRouter>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-dvh flex flex-col">
         <Header />
         <main className="flex-1">
           <Routes>

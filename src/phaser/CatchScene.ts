@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { BallType } from '../types';
+import TimedScene from './TimedScene';
 
 /* ────────────────────────────────────────────────────────────────────
  *  CatchScene — Phaser 3 scene for the catch animation
@@ -24,26 +25,22 @@ const BALL_CONFIG: Record<BallType, { emoji: string; color: number; colorStr: st
   master: { emoji: '🟣', color: 0x8b5cf6, colorStr: '#8B5CF6' },
 };
 
-/* ── Module-level data hand-off ── */
-let _pendingData: CatchSceneData | null = null;
+export const CATCH_SCENE_KEY = 'CatchScene';
 
-export function setCatchSceneData(data: CatchSceneData) {
-  _pendingData = data;
-}
-
-const at = (ms: number, fn: () => void) => setTimeout(fn, ms);
-
-export default class CatchScene extends Phaser.Scene {
+export default class CatchScene extends TimedScene {
   private d!: CatchSceneData;
   private W = 0;
   private H = 0;
 
   constructor() {
-    super({ key: 'CatchScene' });
+    super({ key: CATCH_SCENE_KEY });
   }
 
-  create() {
-    if (_pendingData) this.d = _pendingData;
+  create(data: CatchSceneData) {
+    if (!data?.ballType) return;
+    this.d = data;
+    this.initTimeline();
+    const at = (ms: number, fn: () => void) => this.at(ms, fn);
 
     this.W = Number(this.game.config.width);
     this.H = Number(this.game.config.height);
@@ -377,7 +374,7 @@ export default class CatchScene extends Phaser.Scene {
     breakEmitter.explode(15);
 
     // Monster reappears
-    at(200, () => {
+    this.at(200, () => {
       monster.setPosition(cx, cy - 30);
       this.tweens.add({
         targets: monster,
@@ -398,7 +395,7 @@ export default class CatchScene extends Phaser.Scene {
     });
 
     // Escape dash — monster flies away
-    at(700, () => {
+    this.at(700, () => {
       this.tweens.add({
         targets: monster,
         x: cx + 120,

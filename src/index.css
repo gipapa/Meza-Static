@@ -20,12 +20,32 @@
   --font-body: 'Chakra Petch', sans-serif;
 }
 
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--color-bg-dark);
   color: var(--color-text-primary);
-  min-height: 100vh;
+  min-height: 100vh;   /* fallback */
+  min-height: 100dvh;  /* excludes mobile browser chrome */
   margin: 0;
+}
+
+/* Remove double-tap-to-zoom delay on every tappable control. */
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Rapid-tap controls (mash button): no gestures at all. */
+.touch-mash {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -47,9 +67,11 @@ h1, h2, h3, h4, h5, h6 {
 .card-glow {
   transition: all 0.3s ease;
 }
-.card-glow:hover {
-  box-shadow: 0 0 15px rgba(124, 58, 237, 0.5), 0 0 30px rgba(124, 58, 237, 0.2);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .card-glow:hover {
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.5), 0 0 30px rgba(124, 58, 237, 0.2);
+    transform: translateY(-2px);
+  }
 }
 
 @keyframes shimmer {
