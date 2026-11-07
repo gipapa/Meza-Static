@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { toggleMute, isMuted } from '../lib/bgm';
 import { exportCollection, importCollection, clearAll } from '../lib/storage';
 import { updateSettings } from '../lib/settings';
 import type { AnimationQuality } from '../lib/settings';
@@ -12,6 +14,7 @@ const QUALITY_OPTIONS: { value: AnimationQuality; label: string; desc: string }[
 const ADVANCED_MOVES = Object.keys(ADVANCED_MOVE_ANIMATIONS);
 
 export default function SettingsPage() {
+  const [muted, setMuted] = useState(isMuted);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -50,6 +53,28 @@ export default function SettingsPage() {
       <h1 className="font-display text-3xl text-center mb-8 neon-text">設定</h1>
 
       <div className="space-y-6">
+        <nav aria-label="訓練家與遊戲說明" className="grid grid-cols-2 gap-3">
+          <Link to="/trainer" className="min-h-11 flex items-center justify-center gap-2 rounded-xl p-4 bg-bg-card border border-white/10 text-sm hover:bg-bg-card-hover">
+            👤 訓練家
+          </Link>
+          <Link to="/howto" className="min-h-11 flex items-center justify-center gap-2 rounded-xl p-4 bg-bg-card border border-white/10 text-sm hover:bg-bg-card-hover">
+            📖 遊戲說明
+          </Link>
+        </nav>
+
+        <div className="bg-bg-card rounded-xl p-5 border border-white/5">
+          <h2 className="font-display text-sm mb-3">🔊 音量</h2>
+          <button
+            type="button"
+            aria-label="靜音"
+            aria-pressed={muted}
+            onClick={() => setMuted(toggleMute())}
+            className="min-h-11 w-full px-4 py-2 rounded-lg border border-white/10 bg-bg-dark text-sm hover:bg-bg-card-hover"
+          >
+            {muted ? '🔇 已靜音，點擊開啟聲音' : '🔊 聲音已開啟，點擊靜音'}
+          </button>
+        </div>
+
         {/* Attack animation quality */}
         <div className="bg-bg-card rounded-xl p-5 border border-white/5">
           <h2 className="font-display text-sm mb-2">🎬 攻擊動畫</h2>

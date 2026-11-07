@@ -1,22 +1,12 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { toggleMute, isMuted } from '../lib/bgm';
 
 const NAV_ITEMS = [
   { to: '/play', label: '遊玩', icon: '🎮' },
   { to: '/collection', label: '收藏', icon: '📦' },
-  { to: '/trainer', label: '訓練家', icon: '👤' },
-  { to: '/howto', label: '遊戲說明', icon: '📖' },
 ];
 
 export default function Header() {
   const location = useLocation();
-  const [muted, setMuted] = useState(isMuted());
-
-  const handleToggleMute = () => {
-    const m = toggleMute();
-    setMuted(m);
-  };
 
   return (
     <header className="sticky top-0 z-50 bg-bg-dark/90 backdrop-blur border-b border-primary/30">
@@ -51,13 +41,6 @@ export default function Header() {
           >
             ⚙️
           </Link>
-          <button
-            onClick={handleToggleMute}
-            className="ml-1 px-2 py-1.5 rounded text-sm text-text-muted hover:text-text-primary hover:bg-bg-card transition-all"
-            title={muted ? '取消靜音' : '靜音'}
-          >
-            {muted ? '🔇' : '🔊'}
-          </button>
         </nav>
       </div>
     </header>
