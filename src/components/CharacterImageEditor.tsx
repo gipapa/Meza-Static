@@ -28,6 +28,7 @@ export default function CharacterImageEditor({ tag }: { tag: Tag }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(entry?.kind === 'url' ? entry.src : '');
   const [busy, setBusy] = useState(false);
+  const processing = useRef(false);
   const [status, setStatus] = useState<Status>(null);
   const alive = useRef(true);
   useEffect(() => {
@@ -37,29 +38,69 @@ export default function CharacterImageEditor({ tag }: { tag: Tag }) {
 
   const safeStatus = (s: Status) => { if (alive.current) setStatus(s); };
 
-  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow picking the same file again
-    if (!file || busy) return;
+  const applyImage = async (readFile: () => Promise<File>, pasted = false) => {
+    if (processing.current) return;
+    processing.current = true;
     setBusy(true);
     setStatus({ tone: 'info', text: '處理圖片中…' });
     try {
+      const file = await readFile();
+      if (!alive.current) return;
       const dataUrl = await processImageFile(file);
+      if (!alive.current) return;
       const r = setCharacterImage(id, { kind: 'upload', src: dataUrl });
       safeStatus(r.ok
-        ? { tone: 'ok', text: `已套用上傳圖片（壓縮後約 ${Math.round(dataUrl.length * 0.75 / 1024)} KB）` }
+        ? { tone: 'ok', text: `已套用${pasted ? '貼上的' : '上傳'}圖片（壓縮後約 ${Math.round(dataUrl.length * 0.75 / 1024)} KB）` }
         : { tone: 'error', text: r.error });
     } catch (err) {
-      safeStatus({ tone: 'error', text: err instanceof ImageError ? err.message : '無法處理這張圖片' });
+      safeStatus({ tone: 'error', text: err instanceof ImageError ? err.message
+        : pasted ? '無法讀取剪貼簿，請點下方貼上區後按 Cmd／Ctrl + V，或改用上傳圖片。' : '無法處理這張圖片' });
     } finally {
+      processing.current = false;
       if (alive.current) setBusy(false);
     }
   };
 
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow picking the same file again
+    if (file) void applyImage(async () => file);
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLElement>) => {
+    const file = Array.from(e.clipboardData.items)
+      .find(item => item.kind === 'file' && item.type.startsWith('image/'))?.getAsFile()
+      ?? Array.from(e.clipboardData.files).find(file => file.type.startsWith('image/'));
+    if (!file) {
+      if (e.target instanceof HTMLTextAreaElement) {
+        e.preventDefault();
+        setStatus({ tone: 'error', text: '剪貼簿中沒有圖片，請先在圖片上選「複製圖片」，再貼上。' });
+      }
+      return; // Keep normal text/URL pasting intact.
+    }
+    e.preventDefault();
+    void applyImage(async () => file, true);
+  };
+
+  const onPasteButton = () => {
+    void applyImage(async () => {
+      if (!navigator.clipboard?.read) {
+        throw new ImageError('此瀏覽器無法直接讀取剪貼簿，請點下方貼上區後按 Cmd／Ctrl + V，或改用上傳圖片。');
+      }
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find(type => type.startsWith('image/'));
+        if (type) return new File([await item.getType(type)], 'clipboard-image', { type });
+      }
+      throw new ImageError('剪貼簿中沒有圖片，請先在圖片上選「複製圖片」，再貼上。');
+    }, true);
+  };
+
   const onApplyUrl = async () => {
-    if (busy) return;
+    if (processing.current) return;
     const v = validateImageUrl(url);
     if (!v.ok) { setStatus({ tone: 'error', text: v.error }); return; }
+    processing.current = true;
     setBusy(true);
     setStatus({ tone: 'info', text: '讀取圖片中…' });
     try {
@@ -74,6 +115,7 @@ export default function CharacterImageEditor({ tag }: { tag: Tag }) {
       else if (probe.cache) safeStatus({ tone: 'ok', text: '已套用網址圖片（已存一份縮圖，動畫也會使用）' });
       else safeStatus({ tone: 'warn', text: '已套用網址圖片；但該網站不允許動畫取用，戰鬥／捕獲動畫中會顯示屬性 emoji' });
     } finally {
+      processing.current = false;
       if (alive.current) setBusy(false);
     }
   };
@@ -85,7 +127,7 @@ export default function CharacterImageEditor({ tag }: { tag: Tag }) {
   };
 
   return (
-    <section className="mt-8 rounded-2xl bg-bg-card border border-white/10 p-4 text-left" data-testid="character-image-editor">
+    <section className="mt-8 rounded-2xl bg-bg-card border border-white/10 p-4 text-left" onPaste={onPaste} data-testid="character-image-editor">
       <h3 className="font-display text-lg mb-1">🖼️ 角色圖片</h3>
       <p className="text-xs text-text-muted mb-4">
         依角色 #{id}（{dn(tag.name)}）保存在這台裝置，卡牌、戰鬥、捕獲與攻擊動畫都會使用；同種的野生怪獸也會套用。未設定或圖片失效時顯示屬性 emoji。
@@ -121,6 +163,15 @@ export default function CharacterImageEditor({ tag }: { tag: Tag }) {
         >
           📁 {entry ? '更換圖片' : '上傳圖片'}
         </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onPasteButton}
+          className="min-h-11 px-4 rounded-lg bg-primary hover:bg-primary-light text-white text-sm font-display disabled:opacity-40"
+          data-testid="character-image-paste"
+        >
+          📋 貼上圖片
+        </button>
         {entry && (
           <button
             type="button"
@@ -133,6 +184,16 @@ export default function CharacterImageEditor({ tag }: { tag: Tag }) {
           </button>
         )}
       </div>
+
+      <textarea
+        value=""
+        onChange={() => { /* This field only accepts pasted image files. */ }}
+        disabled={busy}
+        aria-label="圖片貼上區"
+        placeholder="複製圖片後，點這裡按 Cmd／Ctrl + V 貼上"
+        className="w-full min-h-16 p-3 mb-3 rounded-lg bg-black/30 border border-dashed border-white/30 text-base sm:text-sm resize-none focus:outline-none focus:border-neon-cyan disabled:opacity-40"
+        data-testid="character-image-paste-area"
+      />
 
       <form
         className="flex gap-2"
