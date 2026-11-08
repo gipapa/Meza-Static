@@ -8,11 +8,13 @@
  *  ──────────────────────────────────────────────────────────────────── */
 import { PETAL_DANCE_TIMELINE } from './petalDanceTimeline.ts';
 import { SOLAR_BEAM_TIMELINE } from './solarBeamTimeline.ts';
+import { OUTRAGE_TIMELINE } from './outrageTimeline.ts';
 import type { CinematicTimeline } from './timeline.ts';
 
 export const CINEMATIC_TIMELINES = {
   'petal-dance': PETAL_DANCE_TIMELINE,
   'solar-beam': SOLAR_BEAM_TIMELINE,
+  outrage: OUTRAGE_TIMELINE,
 } as const satisfies Record<string, CinematicTimeline>;
 
 export type CinematicId = keyof typeof CINEMATIC_TIMELINES;

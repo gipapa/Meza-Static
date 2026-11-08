@@ -15,6 +15,7 @@ import type { CinematicId } from './timelines.ts';
 export const ADVANCED_MOVE_ANIMATIONS: Readonly<Record<string, CinematicId>> = {
   花瓣舞: 'petal-dance',
   日光束: 'solar-beam',
+  逆鱗: 'outrage',
 };
 
 export type MoveAnimationChoice =
