@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import TimedScene from './TimedScene';
+import { addActorSprite, baseScale } from './actorArt';
+import type { ActorArt } from './actorArt';
 
 /* ────────────────────────────────────────────────────────────────────
  *  BattleScene — Phaser 3 scene that replaces BattleOverlayAnimation
@@ -11,9 +13,9 @@ import TimedScene from './TimedScene';
  *  - Damage numbers with physics-based pop
  *  ──────────────────────────────────────────────────────────────────── */
 
-export interface BattleCombatant {
+/** emoji is the fallback; `art` (optional) is the custom image. */
+export interface BattleCombatant extends ActorArt {
   name: string;
-  emoji: string;
 }
 
 /**
@@ -142,12 +144,11 @@ export default class BattleScene extends TimedScene {
     const allyY = this.H - 100;
     const { attackerY, defenderY, dir } = resolveBattleLayout(isPlayerAttacking, enemyY, allyY);
 
-    /* ── Sprites (emoji text objects) — drawn by side, not by role ── */
-    const spriteStyle = { fontSize: '48px' };
+    /* ── Sprites (custom image or emoji) — drawn by side, not by role ── */
     const labelStyle = { fontSize: '14px', fontFamily: '"Russo One", sans-serif', color: '#e2e8f0' };
 
-    const enemySprite = this.add.text(cx, enemyY, enemy.emoji, spriteStyle).setOrigin(0.5);
-    const allySprite = this.add.text(cx, allyY, ally.emoji, spriteStyle).setOrigin(0.5);
+    const enemySprite = addActorSprite(this, cx, enemyY, enemy, 48);
+    const allySprite = addActorSprite(this, cx, allyY, ally, 48);
     const enemyLabel = this.add.text(cx, enemyY + 38, enemy.name, labelStyle).setOrigin(0.5);
     const allyLabel = this.add.text(cx, allyY + 38, ally.name, labelStyle).setOrigin(0.5);
 
@@ -206,8 +207,8 @@ export default class BattleScene extends TimedScene {
       this.tweens.add({
         targets: atkSprite,
         y: lungeY,
-        scaleX: 1.15,
-        scaleY: 1.15,
+        scaleX: baseScale(atkSprite) * 1.15,
+        scaleY: baseScale(atkSprite) * 1.15,
         duration: 250,
         ease: 'Back.easeOut',
         yoyo: true,

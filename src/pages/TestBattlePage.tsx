@@ -200,6 +200,7 @@ export function TestCatchPage() {
           key={key}
           ballType="ultra"
           monsterEmoji="🔥"
+          characterId={FIXED_ENEMY.id}
           monsterName="烈焰馬"
           success={success}
           shakeCount={randInt(1, 3)}

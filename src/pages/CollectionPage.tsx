@@ -63,9 +63,12 @@ export default function CollectionPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="font-display text-3xl text-center mb-2 neon-text">收藏</h1>
-      <p className="text-center text-text-muted mb-6">
+      <p className="text-center text-text-muted mb-1">
         已收集 {uniqueCount} 種怪獸
       </p>
+      {collection.length > 0 && (
+        <p className="text-center text-xs text-text-muted mb-6">點選卡牌可上傳或設定角色圖片 🖼️</p>
+      )}
 
       {collection.length === 0 ? (
         <div className="text-center py-16">

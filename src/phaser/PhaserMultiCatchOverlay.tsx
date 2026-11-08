@@ -4,17 +4,20 @@ import PhaserContainer from './PhaserContainer';
 import MultiCatchScene, { MULTI_CATCH_SCENE_KEY } from './MultiCatchScene';
 import type { MultiCatchSceneData, MultiCatchTarget } from './MultiCatchScene';
 import type { BallType } from '../types';
+import { useActorArt } from './useActorArt';
 
 interface Props {
+  /** `characterId` per target selects the custom image (emoji is the fallback). */
   targets: MultiCatchTarget[];
   ballType: BallType;
   onComplete: () => void;
 }
 
 export default function PhaserMultiCatchOverlay({ targets, ballType, onComplete }: Props) {
-  const data: MultiCatchSceneData = useMemo(
-    () => ({ ballType, targets, onComplete }),
-    [], // eslint-disable-line react-hooks/exhaustive-deps
+  const { ready, arts } = useActorArt(targets.map(t => t.characterId));
+  const data: MultiCatchSceneData | null = useMemo(
+    () => (ready ? { ballType, targets: targets.map((t, i) => ({ ...t, ...arts[i] })), onComplete } : null),
+    [ready], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const config = useMemo(() => ({
@@ -28,8 +31,8 @@ export default function PhaserMultiCatchOverlay({ targets, ballType, onComplete 
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-        <PhaserContainer config={config} scene={MultiCatchScene} sceneKey={MULTI_CATCH_SCENE_KEY} data={data} />
+      <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl" style={{ width: config.width, height: config.height, background: '#0a0a14' }}>
+        {data && <PhaserContainer config={config} scene={MultiCatchScene} sceneKey={MULTI_CATCH_SCENE_KEY} data={data} />}
       </div>
     </div>
   );

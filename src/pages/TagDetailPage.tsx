@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import type { Tag } from '../types';
-import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
+import CharacterArt from '../components/CharacterArt';
+import CharacterImageEditor from '../components/CharacterImageEditor';
 import { getEffectiveTag } from '../lib/storage';
 import { useNameReveal } from '../lib/nameMask';
 
@@ -52,9 +54,7 @@ export default function TagDetailPage() {
                 )}
               </div>
               <div className="flex-1 flex items-center justify-center">
-                <div className="text-8xl" style={{ filter: `drop-shadow(0 0 20px ${typeColor})` }}>
-                  {TYPE_EMOJI[primaryType] || '⚪'}
-                </div>
+                <CharacterArt tag={tag} className="text-8xl" style={{ filter: `drop-shadow(0 0 20px ${typeColor})` }} scale={1.6} />
               </div>
               <h2 className="font-display text-2xl">{dn(tag.name)}</h2>
               <div className="flex justify-center gap-2 mt-2">
@@ -100,6 +100,8 @@ export default function TagDetailPage() {
           </div>
         </div>
       </div>
+
+      <CharacterImageEditor tag={tag} />
     </div>
   );
 }

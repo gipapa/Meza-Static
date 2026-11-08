@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { Area, Tag } from '../types';
-import { getTagById, TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { getTagById, TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
+import CharacterArt from '../components/CharacterArt';
+import { characterIdOf } from '../lib/characterImages';
+import { preloadCharacterArt } from '../phaser/useActorArt';
 import { shuffle, pick } from '../lib/rng';
 import { calcDamage, calcEnemyDamage, rollAttackRoulette } from '../lib/battle';
 import { getTypeMultiplier, getEffectivenessLabel, getEffectivenessColor } from '../lib/typeChart';
@@ -74,6 +77,11 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const [allies, setAllies] = useState<MonState[]>(() =>
     playerTags.slice(0, 3).map(t => ({ tag: t, hp: t.stats.hp, maxHp: t.stats.hp, fainted: false })),
   );
+
+  // Decode custom art up front so attack animations start without waiting.
+  useEffect(() => {
+    preloadCharacterArt([...enemies, ...allies].map(m => characterIdOf(m.tag)));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [round, setRound] = useState(1);
   const [phase, setPhase] = useState<Phase>('enemy-send');
@@ -436,7 +444,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     );
   };
 
-  const monEmoji = (tag: Tag) => TYPE_EMOJI[tag.types[0]] || '⚪';
   const monGlow = (tag: Tag) => `drop-shadow(0 0 10px ${TYPE_COLORS[tag.types[0]]})`;
 
   /* ================================================================
@@ -476,7 +483,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         <div className="flex justify-center gap-3 mb-3">
           {enemies.map((e, i) => (
             <div key={e.tag.id} className={`text-center transition-all ${e.fainted ? 'opacity-20 grayscale' : ''} ${i === enemyIdx ? 'scale-110' : 'scale-90 opacity-60'}`}>
-              <div className="text-2xl">{monEmoji(e.tag)}</div>
+              <CharacterArt tag={e.tag} className="text-2xl" />
               <div className="text-[10px] text-text-muted">{dn(e.tag.name)}</div>
               {e.fainted && <div className="text-[10px] text-accent">✕</div>}
             </div>
@@ -487,7 +494,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         {activeEnemy && !activeEnemy.fainted && (
           <div className="relative">
             <div ref={enemyRef} className="text-center">
-              <div className="text-5xl mb-2" style={{ filter: monGlow(activeEnemy.tag) }}>{monEmoji(activeEnemy.tag)}</div>
+              <CharacterArt tag={activeEnemy.tag} className="text-5xl mb-2" style={{ filter: monGlow(activeEnemy.tag) }} scale={1.4} />
               <div className="font-display text-lg">{dn(activeEnemy.tag.name)}</div>
               <div className="flex justify-center gap-1 my-1">
                 {activeEnemy.tag.types.map(t => (
@@ -562,7 +569,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
         {activeAlly && !activeAlly.fainted && (
           <div className="relative mb-3">
             <div ref={allyRef} className="text-center">
-              <div className="text-4xl mb-1" style={{ filter: monGlow(activeAlly.tag) }}>{monEmoji(activeAlly.tag)}</div>
+              <CharacterArt tag={activeAlly.tag} className="text-4xl mb-1" style={{ filter: monGlow(activeAlly.tag) }} scale={1.4} />
               <div className="font-display text-sm">{dn(activeAlly.tag.name)}</div>
               <div className="text-xs text-text-muted mb-1">SPD {activeAlly.tag.stats.spd}</div>
               {hpBar(activeAlly, 'w-40')}

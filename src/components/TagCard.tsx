@@ -1,5 +1,6 @@
 import type { Tag } from '../types';
-import { TYPE_COLORS, TYPE_EMOJI, TYPE_NAMES_ZH } from '../data/monsters';
+import { TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
+import CharacterArt from './CharacterArt';
 import { getEffectiveTag } from '../lib/storage';
 import { useNameReveal } from '../lib/nameMask';
 
@@ -59,12 +60,12 @@ export default function TagCard({ tag, onClick, size = 'md', showBack = false, s
           </div>
           {/* Central Art Area */}
           <div className="flex-1 flex items-center justify-center">
-            <div
+            <CharacterArt
+              tag={tag}
               className={fluid ? 'text-3xl sm:text-5xl' : 'text-4xl sm:text-5xl'}
               style={{ filter: `drop-shadow(0 0 8px ${typeColor})` }}
-            >
-              {TYPE_EMOJI[primaryType] || '⚪'}
-            </div>
+              scale={1.5}
+            />
           </div>
           {/* Name & Type */}
           <div className="mt-auto min-w-0">

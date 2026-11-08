@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import CinematicScene from './CinematicScene';
 import { PETAL_DANCE_TIMELINE } from './petalDanceTimeline';
 import { resolveBattleLayout } from '../BattleScene';
+import { addActorSprite, baseScale } from '../actorArt';
+import type { ActorSprite } from '../actorArt';
 import {
   DESIGN_H as H, DESIGN_W as W, FONT_TC, TEX,
   burst, concentrationLines, converge, cutIn, emitter, every, eyeCatch, floatNumber,
@@ -43,10 +45,10 @@ export default class PetalDanceScene extends CinematicScene {
   protected readonly timeline = PETAL_DANCE_TIMELINE;
 
   private typeColor = PINK;
-  private atkSprite!: Phaser.GameObjects.Text;
-  private defSprite!: Phaser.GameObjects.Text;
-  private twoAtk!: Phaser.GameObjects.Text;
-  private twoDef!: Phaser.GameObjects.Text;
+  private atkSprite!: ActorSprite;
+  private defSprite!: ActorSprite;
+  private twoAtk!: ActorSprite;
+  private twoDef!: ActorSprite;
   private aura!: Phaser.GameObjects.Image;
   private hitText!: Phaser.GameObjects.Text;
   private hits = 0;
@@ -69,20 +71,20 @@ export default class PetalDanceScene extends CinematicScene {
     this.add.ellipse(A_POS.x, A_POS.y + 70, 260, 50, 0x000000, 0.4);
     this.aura = this.add.image(A_POS.x, A_POS.y, TEX.glow).setTint(this.typeColor).setScale(4)
       .setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
-    this.atkSprite = txt(this, A_POS.x, A_POS.y, this.attacker.emoji, { fontSize: '128px' });
+    this.atkSprite = addActorSprite(this, A_POS.x, A_POS.y, this.attacker, 128, { resolution: 2 });
     this.namePlate(A_POS.x, A_POS.y + 112, this.attacker.name, this.d.isPlayerAttacking ? '我方' : '敵方');
 
     // Set B — target close-up: night sky.
     this.backdrop(SET_B, 0x1c0b33, 0x05050f, 90);
     this.add.ellipse(B_POS.x, B_POS.y + 64, 220, 44, 0x000000, 0.45);
-    this.defSprite = txt(this, B_POS.x, B_POS.y, this.defender.emoji, { fontSize: '112px' });
+    this.defSprite = addActorSprite(this, B_POS.x, B_POS.y, this.defender, 112, { resolution: 2 });
     this.namePlate(B_POS.x, B_POS.y + 104, this.defender.name, this.d.isPlayerAttacking ? '敵方' : '我方');
 
     // Set C — two-shot, positions fixed by side like the simple BattleScene.
     this.backdrop(SET_C, 0x101034, 0x2a0b26, 50);
     const cx = SET_C + W / 2;
-    const enemy = txt(this, cx, C_ENEMY_Y, this.d.enemy.emoji, { fontSize: '72px' });
-    const ally = txt(this, cx, C_ALLY_Y, this.d.ally.emoji, { fontSize: '72px' });
+    const enemy = addActorSprite(this, cx, C_ENEMY_Y, this.d.enemy, 72, { resolution: 2 });
+    const ally = addActorSprite(this, cx, C_ALLY_Y, this.d.ally, 72, { resolution: 2 });
     this.namePlate(cx, C_ENEMY_Y + 62, this.d.enemy.name, '敵方');
     this.namePlate(cx, C_ALLY_Y + 62, this.d.ally.name, '我方');
     this.twoAtk = this.d.isPlayerAttacking ? ally : enemy;
@@ -200,7 +202,7 @@ export default class PetalDanceScene extends CinematicScene {
       this.tweens.add({ targets: vs, alpha: 0, duration: 250, delay: 1700, onComplete: () => vs.destroy() });
       this.pan(cx, this.twoAtk.y, 2000);
       this.zoomTo(1.7, 2000);
-      this.tweens.add({ targets: this.twoAtk, scale: 1.12, duration: 300, yoyo: true, repeat: 2 });
+      this.tweens.add({ targets: this.twoAtk, scale: baseScale(this.twoAtk) * 1.12, duration: 300, yoyo: true, repeat: 2 });
     });
     this.phase('intro', 4650, () => screenFlash(this, this.uiTop, 0xffffff, 120, 80, 300));
   }
@@ -216,8 +218,7 @@ export default class PetalDanceScene extends CinematicScene {
       this.uiBack.add(dim);
       stopConc = concentrationLines(this, this.uiBack, W / 2, H * 0.45, { alpha: 0.18, inner: 150 });
       closeCutIn = cutIn(this, this.uiMid, {
-        emoji: this.attacker.emoji,
-        name: this.attacker.name,
+        ...this.attacker,
         lines: ['「花之舞者，', '　聽我號令——」', '「綻放吧！」'],
         color: this.typeColor,
         fromLeft: this.d.isPlayerAttacking,
@@ -325,7 +326,7 @@ export default class PetalDanceScene extends CinematicScene {
     this.phase('charge', 5000, () => this.shake(5000, 0.0025));
     this.phase('charge', 7500, () => {
       closeEye = eyeCatch(this, this.uiMid, {
-        emoji: this.attacker.emoji, color: this.typeColor, shout: '喝啊——！', y: H * 0.3,
+        ...this.attacker, color: this.typeColor, shout: '喝啊——！', y: H * 0.3,
       });
     });
     this.phase('charge', 9500, () => {
@@ -347,7 +348,7 @@ export default class PetalDanceScene extends CinematicScene {
       this.shake(700, 0.02);
       this.tweens.killTweensOf(this.atkSprite);
       this.atkSprite.setY(A_POS.y);
-      this.tweens.add({ targets: this.atkSprite, scale: 1.3, duration: 160, yoyo: true, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: this.atkSprite, scale: baseScale(this.atkSprite) * 1.3, duration: 160, yoyo: true, ease: 'Back.easeOut' });
       this.tweens.add({ targets: this.aura, scale: 9, alpha: 0, duration: 900 });
       burst(this, A_POS.x, A_POS.y, TEX.petal, 140, {
         speed: { min: 250, max: 750 }, lifespan: 1700, scale: { min: 0.6, max: 1.3 },
@@ -534,7 +535,7 @@ export default class PetalDanceScene extends CinematicScene {
     this.phase('finale', 2600, () => {
       this.stopAll();
       closeEye = eyeCatch(this, this.uiMid, {
-        emoji: this.attacker.emoji, color: this.typeColor, shout: '散華吧！', y: H * 0.62,
+        ...this.attacker, color: this.typeColor, shout: '散華吧！', y: H * 0.62,
       });
     });
     this.phase('finale', 4100, () => closeEye());

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import type { BallType } from '../types';
 import TimedScene from './TimedScene';
+import { addActorSprite, baseScale } from './actorArt';
+import type { ActorSprite } from './actorArt';
 
 /* ────────────────────────────────────────────────────────────────────
  *  MultiCatchScene — Phaser 3 scene: throw 3 balls at 3 monsters
@@ -11,7 +13,12 @@ import TimedScene from './TimedScene';
  *  ──────────────────────────────────────────────────────────────────── */
 
 export interface MultiCatchTarget {
-  emoji: string;      // type emoji e.g. 🔥
+  emoji: string;      // type emoji e.g. 🔥 (fallback)
+  /** Custom image (untainted canvas); falls back to emoji. */
+  art?: HTMLCanvasElement | null;
+  artKey?: string;
+  /** Species id used to resolve `art` (React side). */
+  characterId?: string | null;
   name: string;       // display name
   success: boolean;
   shakeCount: number; // 1-3
@@ -91,10 +98,8 @@ export default class MultiCatchScene extends TimedScene {
     bc: { emoji: string; color: number; colorStr: string },
     maxShakes: number,
   ) {
-    /* ── Monster emoji ── */
-    const monster = this.add.text(cx, cy - 30, target.emoji, {
-      fontSize: '42px',
-    }).setOrigin(0.5);
+    /* ── Monster (custom image or emoji) ── */
+    const monster = addActorSprite(this, cx, cy - 30, target, 42);
 
     /* Monster name */
     const nameText = this.add.text(cx, cy + 10, target.name, {
@@ -294,7 +299,7 @@ export default class MultiCatchScene extends TimedScene {
   /* ── Escape ── */
   private showEscape(
     ball: Phaser.GameObjects.Container,
-    monster: Phaser.GameObjects.Text,
+    monster: ActorSprite,
     cx: number, cy: number,
     color: number,
     statusText: Phaser.GameObjects.Text,
@@ -320,15 +325,16 @@ export default class MultiCatchScene extends TimedScene {
 
     this.at(180, () => {
       monster.setPosition(cx, cy - 20);
+      const b = baseScale(monster);
       this.tweens.add({
         targets: monster,
-        scaleX: { from: 0, to: 1.15 },
-        scaleY: { from: 0, to: 1.15 },
+        scaleX: { from: 0, to: b * 1.15 },
+        scaleY: { from: 0, to: b * 1.15 },
         alpha: { from: 0, to: 1 },
         duration: 300,
         ease: 'Back.easeOut',
         onComplete: () => {
-          this.tweens.add({ targets: monster, scaleX: 1, scaleY: 1, duration: 120 });
+          this.tweens.add({ targets: monster, scaleX: b, scaleY: b, duration: 120 });
         },
       });
     });

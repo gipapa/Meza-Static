@@ -1,4 +1,5 @@
 import type { Tag, TrainerProfile, GameStats } from '../types';
+import { clearCharacterImages } from './characterImages';
 
 const STORAGE_KEYS = {
   collection: 'meza_collection',
@@ -156,4 +157,5 @@ export function importCollection(json: string): boolean {
 
 export function clearAll(): void {
   Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+  clearCharacterImages();
 }

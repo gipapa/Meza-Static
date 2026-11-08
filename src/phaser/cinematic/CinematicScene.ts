@@ -3,6 +3,7 @@ import TimedScene from '../TimedScene';
 import { DESIGN_H, DESIGN_W, ensureFxTextures } from './fx';
 import { getPhase } from './timeline';
 import type { CinematicTimeline } from './timeline';
+import type { ActorArt } from '../actorArt';
 
 /* ────────────────────────────────────────────────────────────────────
  *  CinematicScene — base class for advanced (long-form) move animations.
@@ -32,9 +33,9 @@ export const CINEMATIC_CANVAS = { width: DESIGN_W * RENDER_SCALE, height: DESIGN
 /** Where the screen-space UI layer lives in world coordinates. */
 const UI_ORIGIN = { x: -5000, y: -5000 } as const;
 
-export interface CinematicActor {
+/** emoji is the fallback; `art` (optional) is the custom image. */
+export interface CinematicActor extends ActorArt {
   name: string;
-  emoji: string;
 }
 
 export interface MoveCinematicData {

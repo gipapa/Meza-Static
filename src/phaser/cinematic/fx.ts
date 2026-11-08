@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { addActorSprite, baseScale } from '../actorArt';
+import type { ActorArt } from '../actorArt';
 
 /* ────────────────────────────────────────────────────────────────────
  *  Reusable cinematic effects (cut-ins, concentration lines, stamps…).
@@ -247,8 +249,8 @@ export function letterbox(scene: Phaser.Scene, layer: Layer, barH = 54, ms = 500
   };
 }
 
-export interface CutInOptions {
-  emoji: string;
+/** `emoji` is the fallback portrait; `art` (optional) the custom image. */
+export interface CutInOptions extends ActorArt {
   name: string;
   lines: string[];
   /** Accent color of the band. */
@@ -296,7 +298,7 @@ export function cutIn(scene: Phaser.Scene, layer: Layer, o: CutInOptions): () =>
   const px = o.fromLeft ? DESIGN_W * 0.27 : DESIGN_W * 0.73;
   const portraitGlow = scene.add.image(px, 0, TEX.glow).setScale(3.4).setTint(o.color).setAlpha(0.8)
     .setBlendMode(Phaser.BlendModes.ADD);
-  const portrait = txt(scene, px + (o.fromLeft ? -60 : 60), 4, o.emoji, { fontSize: `${Math.round(h * 0.62)}px` });
+  const portrait = addActorSprite(scene, px + (o.fromLeft ? -60 : 60), 4, o, Math.round(h * 0.62), { resolution: 2 });
   c.add([portraitGlow, portrait]);
   scene.tweens.add({ targets: portrait, x: px, duration: 3200, ease: 'Sine.easeOut' });
   scene.tweens.add({ targets: portraitGlow, scale: 4, alpha: 0.5, duration: 600, yoyo: true, repeat: -1 });
@@ -332,7 +334,7 @@ export function cutIn(scene: Phaser.Scene, layer: Layer, o: CutInOptions): () =>
  * band, opened by two shutters. Returns close().
  */
 export function eyeCatch(
-  scene: Phaser.Scene, layer: Layer, o: { emoji: string; color: number; shout: string; y?: number; height?: number },
+  scene: Phaser.Scene, layer: Layer, o: ActorArt & { color: number; shout: string; y?: number; height?: number },
 ): () => void {
   const y = o.y ?? DESIGN_H * 0.4;
   const h = o.height ?? 92;
@@ -349,11 +351,11 @@ export function eyeCatch(
   shape.fillRect(-20, y - h / 2, DESIGN_W + 40, h);
   const mask = shape.createGeometryMask();
 
-  const face = txt(scene, DESIGN_W * 0.5, y + 10, o.emoji, { fontSize: `${Math.round(h * 2.6)}px` }).setMask(mask);
+  const face = addActorSprite(scene, DESIGN_W * 0.5, y + 10, o, Math.round(h * 2.6), { resolution: 2 }).setMask(mask);
   const shine = scene.add.image(DESIGN_W * 0.5, y, TEX.streak).setScale(8, 30).setAlpha(0.18).setAngle(20)
     .setBlendMode(Phaser.BlendModes.ADD).setMask(mask);
   c.add([face, shine]);
-  scene.tweens.add({ targets: face, x: DESIGN_W * 0.42, scale: 1.08, duration: 2000, ease: 'Sine.easeOut' });
+  scene.tweens.add({ targets: face, x: DESIGN_W * 0.42, scale: baseScale(face) * 1.08, duration: 2000, ease: 'Sine.easeOut' });
   scene.tweens.add({ targets: shine, x: { from: -60, to: DESIGN_W + 60 }, duration: 900, repeat: -1, repeatDelay: 300 });
 
   const edgeTop = scene.add.rectangle(DESIGN_W / 2, y - h / 2, DESIGN_W + 40, 3, o.color);
