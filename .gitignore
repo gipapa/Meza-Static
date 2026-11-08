@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# advanced-move-animation verification output
+cinematic-check/

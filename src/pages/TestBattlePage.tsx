@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import MoveAnimationOverlay from '../phaser/MoveAnimationOverlay';
-import { getTagById } from '../data/monsters';
+import { ALL_TAGS, getTagById } from '../data/monsters';
+import { ADVANCED_MOVE_ANIMATIONS } from '../phaser/cinematic/moveAnimations';
+import { characterIdOf } from '../lib/characterImages';
 import { useSettings } from '../lib/useSettings';
 import type { AnimationQuality } from '../lib/settings';
 import PhaserBattleOverlay from '../phaser/PhaserBattleOverlay';
@@ -223,18 +225,27 @@ export function TestCatchPage() {
  * Advanced-animation test page: /#/test/cinematic
  * Query params (for manual QA and automated checks):
  *   quality=simple|advanced|setting  (default advanced)
- *   side=ally|enemy                  (who uses 花瓣舞, default ally)
+ *   side=ally|enemy                  (who uses the move, default ally)
  *   speed=1..20                      (playback speed, default 1)
+ *   move=<招式名稱>                  (default 花瓣舞; any key of ADVANCED_MOVE_ANIMATIONS)
  */
 const PETAL_TAG: Tag = getTagById('045') ?? {
   id: '045', name: '霸王花', grade: 4, types: ['grass', 'poison'], pe: 490,
   stats: { hp: 75, atk: 80, def: 85, spd: 50 }, move: { name: '花瓣舞', type: 'grass', power: 120 }, flags: {},
 };
 
+/** A monster that knows `move` (or the 花瓣舞 tag with its move swapped). */
+function attackerFor(move: string): Tag {
+  if (move === PETAL_TAG.move.name) return PETAL_TAG;
+  const known = ALL_TAGS.find(t => t.move.name === move);
+  return known ?? { ...PETAL_TAG, move: { ...PETAL_TAG.move, name: move } };
+}
+
 function readQuery() {
   const q = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
   const quality = q.get('quality');
   return {
+    move: q.get('move') || PETAL_TAG.move.name,
     quality: (quality === 'simple' || quality === 'setting' ? quality : 'advanced') as AnimationQuality | 'setting',
     side: q.get('side') === 'enemy' ? 'enemy' : 'ally',
     speed: Math.min(20, Math.max(0.25, Number(q.get('speed')) || 1)),
@@ -266,22 +277,41 @@ export function TestCinematicPage() {
   useEffect(() => { started.current = performance.now(); }, [key]);
 
   const isPlayer = opts.side === 'ally';
-  const ally = isPlayer ? PETAL_TAG : FIXED_ALLY;
-  const enemy = isPlayer ? FIXED_ENEMY : PETAL_TAG;
+  const attacker = attackerFor(opts.move);
+  const ally = isPlayer ? attacker : FIXED_ALLY;
+  const enemy = isPlayer ? FIXED_ENEMY : attacker;
   const effective = opts.quality === 'setting' ? settings.animationQuality : opts.quality;
+
+  // DEV-only hook for .claude/skills/advanced-move-animation/scripts/verify-cinematic.mjs
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const w = window as unknown as { __mezaCinematicTest?: object };
+    w.__mezaCinematicTest = {
+      move: opts.move,
+      attackerSide: isPlayer ? 'ally' : 'enemy',
+      defenderSide: isPlayer ? 'enemy' : 'ally',
+      attackerId: characterIdOf(attacker),
+      defenderId: characterIdOf(isPlayer ? enemy : ally),
+    };
+  }, [opts.move, isPlayer, attacker, enemy, ally]);
 
   const btn = (active: boolean) =>
     `min-h-11 px-3 py-2 rounded-lg text-sm font-display border ${active ? 'border-neon-cyan bg-primary/30' : 'border-white/10 bg-bg-card'}`;
 
   return (
     <div className="p-4 sm:p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-display text-primary-light mb-2">Cinematic Test — 花瓣舞</h1>
+      <h1 className="text-2xl font-display text-primary-light mb-2">Cinematic Test — <span data-testid="move">{opts.move}</span></h1>
       <p className="text-text-muted text-xs mb-4">
-        {isPlayer ? `我方 ${PETAL_TAG.name}（下方）→ 敵方 ${FIXED_ENEMY.name}` : `敵方 ${PETAL_TAG.name}（上方）→ 我方 ${FIXED_ALLY.name}`}，
+        {isPlayer ? `我方 ${attacker.name}（下方）→ 敵方 ${FIXED_ENEMY.name}` : `敵方 ${attacker.name}（上方）→ 我方 ${FIXED_ALLY.name}`}，
         damage=150。進階版約 60 秒，右上角可跳過。目前設定：{settings.animationQuality}
       </p>
 
       <div className="space-y-2 mb-4">
+        <div className="flex flex-wrap gap-2">
+          {Object.keys(ADVANCED_MOVE_ANIMATIONS).map(m => (
+            <button key={m} type="button" className={btn(opts.move === m)} onClick={() => restart({ move: m })}>{m}</button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2">
           {(['advanced', 'simple', 'setting'] as const).map(q => (
             <button key={q} type="button" className={btn(opts.quality === q)} onClick={() => restart({ quality: q })}>
@@ -311,8 +341,8 @@ export function TestCinematicPage() {
           enemy={enemy}
           ally={ally}
           isPlayerAttacking={isPlayer}
-          moveType={PETAL_TAG.move.type}
-          moveName={PETAL_TAG.move.name}
+          moveType={attacker.move.type}
+          moveName={attacker.move.name}
           damage={150}
           quality={opts.quality === 'setting' ? undefined : opts.quality}
           speed={opts.speed}

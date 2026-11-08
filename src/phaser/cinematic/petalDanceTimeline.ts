@@ -1,7 +1,10 @@
-import { defineTimeline } from './timeline.ts';
+import { defineAdvancedTimeline } from './spec.ts';
 
-/** 花瓣舞 advanced cinematic — 60 s, Super-Robot-Wars style. */
-export const PETAL_DANCE_TIMELINE = defineTimeline([
+/**
+ * 花瓣舞 advanced cinematic — 60 s, Super-Robot-Wars style.
+ * Attack-body phase id: 'storm'.
+ */
+export const PETAL_DANCE_TIMELINE = defineAdvancedTimeline([
   { id: 'intro', label: '開場・警報', durationMs: 5000 },
   { id: 'cutin', label: '發招 Cut-in', durationMs: 8000 },
   { id: 'charge', label: '集中・蓄力', durationMs: 11000 },

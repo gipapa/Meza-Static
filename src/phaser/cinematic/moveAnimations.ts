@@ -1,21 +1,24 @@
 /* ────────────────────────────────────────────────────────────────────
  *  Which animation a move plays — pure, no Phaser imports (unit-testable).
  *
- *  To add an advanced animation for another move:
- *    1. write a CinematicScene subclass + its timeline,
- *    2. register it in cinematic/registry.ts under a new id,
+ *  To add an advanced animation for another move, follow
+ *  .claude/skills/advanced-move-animation/SKILL.md:
+ *    1. <id>Timeline.ts (defineAdvancedTimeline, 60 s) + timelines.ts entry,
+ *    2. <Name>Scene.ts (CinematicScene subclass) + registry.ts entry,
  *    3. map the move name to that id below.
  *  Moves without an entry always fall back to the simple animation.
  *  ──────────────────────────────────────────────────────────────────── */
 import type { AnimationQuality } from '../../lib/settings';
+import type { CinematicId } from './timelines.ts';
 
-export const ADVANCED_MOVE_ANIMATIONS: Readonly<Record<string, string>> = {
+/** Move name (exact, as in data/monsters.ts) → cinematic id. */
+export const ADVANCED_MOVE_ANIMATIONS: Readonly<Record<string, CinematicId>> = {
   花瓣舞: 'petal-dance',
 };
 
 export type MoveAnimationChoice =
   | { variant: 'simple' }
-  | { variant: 'advanced'; id: string };
+  | { variant: 'advanced'; id: CinematicId };
 
 export function hasAdvancedAnimation(moveName: string): boolean {
   return Object.prototype.hasOwnProperty.call(ADVANCED_MOVE_ANIMATIONS, moveName);

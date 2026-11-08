@@ -1,0 +1,229 @@
+// TEMPLATE — copy to src/phaser/cinematic/<Name>Scene.ts, e.g. FlameBurstScene.ts
+// Rename: TemplateMoveScene / TEMPLATE_MOVE_SCENE_KEY / TEMPLATE_MOVE_TIMELINE / 'move-body'.
+// This compiles as-is (checked by the skill's validation step), so start from a working scene and
+// replace each beat with the move's own direction from the design brief.
+//
+// Rules (see SKILL.md):
+//  - All timing goes through this.phase()/this.cue() and tweens. Never setTimeout/setInterval/time.delayedCall.
+//  - Camera effects through this.cut/pan/zoomTo/rotateTo/shake (they respect speed + reduced motion).
+//  - Monsters only via addActorSprite (custom art or emoji fallback); relative scale tweens use baseScale().
+//  - Positions by side in two-shots: enemy top, ally bottom (resolveBattleLayout). Never flip sprites.
+//  - Screen-space UI (cut-ins, titles, flashes) goes into this.uiBack / uiMid / uiTop.
+//  - Every looping effect returns a stop fn → push it to this.stops and call stopAll() at a beat change.
+import Phaser from 'phaser';
+import CinematicScene from './CinematicScene';
+import { TEMPLATE_MOVE_TIMELINE } from './templateMoveTimeline';
+import { resolveBattleLayout } from '../BattleScene';
+import { addActorSprite, baseScale } from '../actorArt';
+import type { ActorSprite } from '../actorArt';
+import {
+  DESIGN_H as H, DESIGN_W as W, FONT_TC, TEX,
+  burst, concentrationLines, converge, cutIn, emitter, eyeCatch, floatNumber,
+  hexToNum, letterbox, ring, screenFlash, slash, stamp, txt,
+} from './fx';
+
+export const TEMPLATE_MOVE_SCENE_KEY = 'TemplateMoveScene';
+
+/* ── Move-specific palette & motif (from the design brief) ── */
+const MOTIF_TINTS = [0xffffff, 0xffe066, 0xff9f43] as const;
+
+/* ── Sets laid out side by side in world space ── */
+const SET_A = 0;     // attacker close-up
+const SET_B = 1000;  // defender close-up
+const SET_C = 2000;  // two-shot (enemy top, ally bottom — same as the simple animation)
+const A_POS = { x: SET_A + W / 2, y: 400 };
+const B_POS = { x: SET_B + W / 2, y: 330 };
+const C_ENEMY_Y = 170;
+const C_ALLY_Y = 500;
+
+export default class TemplateMoveScene extends CinematicScene {
+  protected readonly timeline = TEMPLATE_MOVE_TIMELINE;
+
+  private color = 0xffffff;
+  private atkSprite!: ActorSprite;
+  private defSprite!: ActorSprite;
+  private twoAtk!: ActorSprite;
+  private stops: Array<() => void> = [];
+  private retractLetterbox: () => void = () => {};
+
+  constructor() {
+    super(TEMPLATE_MOVE_SCENE_KEY);
+  }
+
+  /* ───────────────────────────── sets ───────────────────────────── */
+
+  protected build() {
+    this.color = hexToNum(this.d.typeColor);
+    this.stops = [];
+
+    // Backdrops: one quad each (bake detailed backgrounds into a canvas texture, see PetalDanceScene#backdrop).
+    for (const [ox, c] of [[SET_A, 0x101828], [SET_B, 0x1a0f2e], [SET_C, 0x0f1630]] as const) {
+      this.add.rectangle(ox + W / 2, H / 2, W + 520, H + 520, c);
+    }
+
+    // Set A — attacker close-up.
+    this.atkSprite = addActorSprite(this, A_POS.x, A_POS.y, this.attacker, 128, { resolution: 2 });
+    // Set B — defender close-up.
+    this.defSprite = addActorSprite(this, B_POS.x, B_POS.y, this.defender, 112, { resolution: 2 });
+    // Set C — two-shot, positions fixed by side.
+    const cx = SET_C + W / 2;
+    const enemy = addActorSprite(this, cx, C_ENEMY_Y, this.d.enemy, 72, { resolution: 2 });
+    const ally = addActorSprite(this, cx, C_ALLY_Y, this.d.ally, 72, { resolution: 2 });
+    this.twoAtk = this.d.isPlayerAttacking ? ally : enemy;
+
+    // Ambient motif particles (keep ≤ ~20 alive per set).
+    for (const ox of [SET_A, SET_B, SET_C]) {
+      emitter(this, ox + W / 2, -20, TEX.spark, {
+        x: { min: -W / 2, max: W / 2 }, speedY: { min: 30, max: 60 }, lifespan: 8000, frequency: 500,
+        scale: { min: 0.3, max: 0.6 }, alpha: { start: 0.6, end: 0 }, tint: [...MOTIF_TINTS],
+      });
+    }
+  }
+
+  private stopAll() {
+    this.stops.forEach(s => s());
+    this.stops = [];
+  }
+
+  /* ──────────────────────────── direction ─────────────────────────── */
+
+  protected direct() {
+    this.directIntro();
+    this.directCutIn();
+    this.directCharge();
+    this.directRelease();
+    this.directBody();
+    this.directFinale();
+    this.directAftermath();
+  }
+
+  /** 3–6 s: two-shot + warning band, push in on the attacker. */
+  private directIntro() {
+    const cx = SET_C + W / 2;
+    this.phase('intro', 0, () => {
+      this.cut(cx, H / 2, 1.08);
+      this.cameras.main.fadeIn(this.ms(800));
+      this.retractLetterbox = letterbox(this, this.uiTop);
+    });
+    this.phase('intro', 2500, () => {
+      this.pan(cx, this.twoAtk.y, 2000);
+      this.zoomTo(1.7, 2000);
+      this.tweens.add({ targets: this.twoAtk, scale: baseScale(this.twoAtk) * 1.12, duration: 300, yoyo: true, repeat: 2 });
+    });
+    this.phase('intro', 4650, () => screenFlash(this, this.uiTop, 0xffffff, 120, 80, 300));
+  }
+
+  /** 6–10 s: pilot cut-in with dialogue → move title card. */
+  private directCutIn() {
+    let close: () => void = () => {};
+    this.phase('cutin', 0, () => {
+      this.cut(A_POS.x, A_POS.y - 40, 1);
+      close = cutIn(this, this.uiMid, {
+        ...this.attacker,
+        lines: ['「台詞一，', '　台詞二——」', '「招式名！」'],
+        color: this.color,
+        fromLeft: this.d.isPlayerAttacking, // ally from the left, enemy from the right
+        y: H * 0.45,
+      });
+    });
+    this.phase('cutin', 4000, () => {
+      close();
+      const chars = this.d.moveName.split('');
+      const step = Math.min(96, (W - 40) / Math.max(1, chars.length));
+      chars.forEach((ch, i) => {
+        const t = txt(this, W / 2 + (i - (chars.length - 1) / 2) * step, H * 0.45, ch, {
+          fontFamily: FONT_TC, fontSize: '84px', fontStyle: 'bold',
+          stroke: '#' + this.color.toString(16).padStart(6, '0'), strokeThickness: 10,
+        });
+        this.uiMid.add(t);
+        stamp(this, t, 150 + i * 260, 3.2);
+        this.tweens.add({ targets: t, alpha: 0, duration: 300, delay: 3300, onComplete: () => t.destroy() });
+      });
+    });
+  }
+
+  /** 8–13 s: attacker close-up, energy gathers, eye-catch, white-out. */
+  private directCharge() {
+    let closeEye: () => void = () => {};
+    this.phase('charge', 0, () => {
+      this.cut(A_POS.x, A_POS.y, 1.1);
+      this.zoomTo(1.5, 8000);
+      this.stops.push(converge(this, A_POS.x, A_POS.y, { tints: MOTIF_TINTS }));
+      this.stops.push(concentrationLines(this, this.uiBack, W / 2, H * 0.6, { color: this.color, alpha: 0.25 }));
+    });
+    this.phase('charge', 5000, () => this.shake(5000, 0.0025));
+    this.phase('charge', 7500, () => {
+      closeEye = eyeCatch(this, this.uiMid, { ...this.attacker, color: this.color, shout: '喝啊——！', y: H * 0.3 });
+    });
+    this.phase('charge', 9500, () => closeEye());
+    this.phase('charge', 10500, () => {
+      this.stopAll();
+      screenFlash(this, this.uiTop, 0xffffff, 450, 150, 250);
+    });
+  }
+
+  /** 3–6 s: burst + shockwave, energy travels attacker → defender in the two-shot. */
+  private directRelease() {
+    this.phase('release', 0, () => {
+      this.cut(A_POS.x, A_POS.y - 20, 1.2);
+      this.shake(700, 0.02);
+      this.tweens.add({ targets: this.atkSprite, scale: baseScale(this.atkSprite) * 1.3, duration: 160, yoyo: true });
+      ring(this, A_POS.x, A_POS.y, this.color, 20, 320, 700, 6);
+      burst(this, A_POS.x, A_POS.y, TEX.spark, 60, { speed: { min: 200, max: 500 }, lifespan: 900, tint: [...MOTIF_TINTS] });
+    });
+    this.phase('release', 1800, () => {
+      // Two-shot: energy travels from the attacker's side to the defender's side.
+      const cx = SET_C + W / 2;
+      const lay = resolveBattleLayout(this.d.isPlayerAttacking, C_ENEMY_Y, C_ALLY_Y); // dir -1 = upwards
+      this.cut(cx, H / 2, 1);
+      burst(this, cx, lay.attackerY, TEX.spark, 50, {
+        speedY: { min: lay.dir * 400, max: lay.dir * 700 }, speedX: { min: -60, max: 60 },
+        lifespan: 900, tint: [...MOTIF_TINTS],
+      });
+    });
+  }
+
+  /** 12–20 s: the attack body. Several hit waves with camera variety. */
+  private directBody() {
+    this.phase('move-body', 0, () => this.cut(B_POS.x, B_POS.y, 1.15));
+    for (const [i, at] of [2500, 5500, 10200, 13200].entries()) {
+      this.phase('move-body', at, () => {
+        slash(this, B_POS.x, B_POS.y, -30 + i * 25, this.color);
+        this.shake(250, 0.012);
+        this.tweens.add({ targets: this.defSprite, x: B_POS.x + 12, duration: 70, yoyo: true, repeat: 1 });
+        floatNumber(this, B_POS.x, B_POS.y - 80, 'HIT!', '#ffe066', 22);
+      });
+    }
+    this.phase('move-body', 7500, () => this.cut(A_POS.x, A_POS.y, 1.2));  // cut back to attacker
+    this.phase('move-body', 9300, () => this.cut(B_POS.x, B_POS.y, 1.15)); // return to target
+  }
+
+  /** 7–11 s: finisher name, eye-catch, maximum impact. */
+  private directFinale() {
+    let closeEye: () => void = () => {};
+    this.phase('finale', 2600, () => {
+      closeEye = eyeCatch(this, this.uiMid, { ...this.attacker, color: this.color, shout: '終結！', y: H * 0.62 });
+    });
+    this.phase('finale', 4100, () => closeEye());
+    this.phase('finale', 6000, () => {
+      this.cut(B_POS.x, B_POS.y, 1.2);
+      this.shake(900, 0.03);
+      screenFlash(this, this.uiTop, this.color, 60, 200, 700);
+      burst(this, B_POS.x, B_POS.y, TEX.glow, 30, { speed: { min: 100, max: 400 }, lifespan: 1200, blendMode: Phaser.BlendModes.ADD });
+    });
+  }
+
+  /** 5–8 s: aftermath, total damage, FINISH, fade out. */
+  private directAftermath() {
+    this.phase('aftermath', 0, () => {
+      this.cut(B_POS.x, B_POS.y, 1);
+      this.tweens.add({ targets: this.defSprite, angle: this.d.isPlayerAttacking ? 22 : -22, y: B_POS.y + 18, alpha: 0.75, duration: 900 });
+      const total = txt(this, W / 2, H * 0.7, `TOTAL DAMAGE -${this.d.damage}`, { fontSize: '26px', color: '#ffe066' });
+      this.uiMid.add(total);
+      stamp(this, total, 300, 2);
+    });
+    this.phase('aftermath', 4000, () => this.retractLetterbox());
+    this.phase('aftermath', 5800, () => this.cameras.main.fadeOut(this.ms(1000)));
+    // The base class calls finish() (→ onComplete) at exactly 60 s.
+  }
+}

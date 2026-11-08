@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import PhaserContainer from '../PhaserContainer';
 import { CINEMATIC_CANVAS } from './CinematicScene';
 import type { MoveCinematicData } from './CinematicScene';
-import { CINEMATICS } from './registry';
+import { getCinematic } from './registry';
 
 interface Props {
   cinematicId: string;
@@ -28,7 +28,7 @@ const CONFIG = {
  * these animations run up to a minute.
  */
 export default function AdvancedMoveOverlay({ cinematicId, data, onComplete }: Props) {
-  const entry = CINEMATICS[cinematicId];
+  const entry = getCinematic(cinematicId);
   // onComplete fires once, whether the timeline ends or the player skips.
   const [finish] = useState(() => {
     let done = false;

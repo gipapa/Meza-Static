@@ -1,0 +1,19 @@
+// TEMPLATE — copy to src/phaser/cinematic/<camelId>Timeline.ts, e.g. flameBurstTimeline.ts
+// Replace: TEMPLATE_MOVE_TIMELINE → <UPPER_SNAKE_ID>_TIMELINE, 'move-body' → the attack-body id,
+// labels → 中文 beat names. Durations must stay inside the ranges in spec.ts and sum to 60 000 ms
+// (defineAdvancedTimeline throws otherwise, and `npm test` fails).
+import { defineAdvancedTimeline } from './spec.ts';
+
+/**
+ * <招式名稱> advanced cinematic — 60 s.
+ * Attack-body phase id: 'move-body'.
+ */
+export const TEMPLATE_MOVE_TIMELINE = defineAdvancedTimeline([
+  { id: 'intro', label: '開場・警報', durationMs: 5000 },      // 3–6 s
+  { id: 'cutin', label: '發招 Cut-in', durationMs: 8000 },     // 6–10 s
+  { id: 'charge', label: '集中・蓄力', durationMs: 11000 },    // 8–13 s
+  { id: 'release', label: '解放', durationMs: 4000 },          // 3–6 s
+  { id: 'move-body', label: '<招式本體>', durationMs: 16000 }, // 12–20 s, move-specific id
+  { id: 'finale', label: '終結・<終結技名>', durationMs: 9000 }, // 7–11 s
+  { id: 'aftermath', label: '收尾', durationMs: 7000 },        // 5–8 s
+]);

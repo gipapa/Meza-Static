@@ -78,6 +78,9 @@ export default abstract class CinematicScene extends TimedScene {
   private cues: { t: number; seq: number; fn: () => void }[] = [];
   private seq = 0;
 
+  /** Design-time ms elapsed since create() (the tween clock). Used by verification tools. */
+  get elapsedMs(): number { return this.clock; }
+
   get attacker(): CinematicActor { return this.d.isPlayerAttacking ? this.d.ally : this.d.enemy; }
   get defender(): CinematicActor { return this.d.isPlayerAttacking ? this.d.enemy : this.d.ally; }
 
@@ -112,9 +115,14 @@ export default abstract class CinematicScene extends TimedScene {
     this.reduceMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     this.separateCameras();
 
-    // Linear 0 → N over N ms: its value *is* elapsed design time.
-    const span = this.timeline.totalMs * 2 + 10_000;
-    this.clockTween = this.tweens.addCounter({ from: 0, to: span, duration: span, ease: 'Linear' });
+    // Linear 0 → N over N ms: its value *is* elapsed design time. Keeping
+    // the tween span equal to the timeline makes a 60,000 ms design timeline
+    // a 60-second real-time cinematic at speed=1 (and preserves QA speedups).
+    const span = this.timeline.totalMs;
+    // persist: a completed tween is otherwise destroyed and getValue() returns
+    // null, freezing the clock just short of totalMs so the final cue
+    // (finish → onComplete) would never fire. Keep it alive at its end value.
+    this.clockTween = this.tweens.addCounter({ from: 0, to: span, duration: span, ease: 'Linear', persist: true });
 
     this.build();
     for (const p of this.timeline.phases) this.cue(p.start, () => this.d.onPhase?.(p.id, p.label));
@@ -155,8 +163,9 @@ export default abstract class CinematicScene extends TimedScene {
   }
 
   update() {
-    if (!this.d || this.cues.length === 0 || !this.clockTween) return;
+    if (!this.d || !this.clockTween) return;
     this.clock = this.clockTween.getValue() ?? this.clock;
+    if (this.cues.length === 0) return;
     // Fire due cues in time order; cues may schedule further cues.
     for (;;) {
       let next = -1;
