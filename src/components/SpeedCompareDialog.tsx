@@ -3,10 +3,11 @@ import type { Tag } from '../types';
 import CharacterArt from './CharacterArt';
 import StepDialog from './StepDialog';
 import { useNameReveal } from '../lib/nameMask';
+import { allyClipPath, duelGeometry, splitLineClipPath } from '../lib/speedDuel';
+import type { SpeedDuelStage as Stage } from '../lib/speedDuel';
 
 const CHALLENGE_MS = 4000;
 const TARGET_TAPS = 8;
-type Stage = 'fast' | 'ready' | 'running' | 'won' | 'lost';
 
 export default function SpeedCompareDialog({ ally, enemy, onComplete }: {
   ally: Tag;
@@ -21,6 +22,8 @@ export default function SpeedCompareDialog({ ally, enemy, onComplete }: {
   const tapsRef = useRef(0);
   const finishedRef = useRef(false);
   const completeRef = useRef(onComplete);
+  const enemyRef = useRef<HTMLDivElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { completeRef.current = onComplete; }, [onComplete]);
 
@@ -53,6 +56,15 @@ export default function SpeedCompareDialog({ ally, enemy, onComplete }: {
     }
     tapsRef.current += 1;
     setTaps(tapsRef.current);
+    const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduceMotion) {
+      enemyRef.current?.animate?.([
+        { transform: 'translate(0, 0)' },
+        { transform: 'translate(6px, -6px) rotate(4deg)', offset: 0.3 },
+        { transform: 'translate(0, 0)' },
+      ], { duration: 250, easing: 'ease-out' });
+      lineRef.current?.animate?.([{ filter: 'brightness(2.5)' }, { filter: 'brightness(1)' }], { duration: 250, easing: 'ease-out' });
+    }
     if (tapsRef.current >= TARGET_TAPS) {
       finishedRef.current = true;
       setStage('won');
@@ -75,7 +87,9 @@ export default function SpeedCompareDialog({ ally, enemy, onComplete }: {
     setStage('running');
   };
   const fast = stage === 'fast';
-  const result = stage === 'won' || stage === 'lost';
+  const won = stage === 'won';
+  const result = won || stage === 'lost';
+  const geometry = duelGeometry(stage, taps, TARGET_TAPS);
 
   return (
     <StepDialog title={fast ? '⚡ 雙方速度比較' : '⚡ 連打以決定誰先攻'}>
@@ -91,25 +105,51 @@ export default function SpeedCompareDialog({ ally, enemy, onComplete }: {
           ))}
         </div>
       ) : (
-        <div className="relative h-60 sm:h-64 overflow-hidden rounded-xl border border-white/20 mb-4" data-testid="speed-duel">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-950 to-red-500/30" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%)' }} />
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-950 to-cyan-500/30" style={{ clipPath: 'polygon(0 0, 0 100%, 100% 100%)' }} />
-          <div className="absolute top-3 right-4 text-center max-w-[65%]">
-            <p className="text-xs text-red-200 mb-1">敵方</p>
-            <CharacterArt tag={enemy} className="text-4xl mb-1" />
-            <p className="font-display text-sm truncate">{dn(enemy.name)}</p>
-            <p className="text-xs text-red-200">SPD {enemy.stats.spd}</p>
+        <div className="relative h-80 sm:h-96 overflow-hidden rounded-xl border border-white/20 mb-4 select-none"
+          data-testid="speed-duel" data-stage={stage} data-split={geometry.split.toFixed(1)}
+          role="group" aria-label={`速度對峙：上方敵方 ${dn(enemy.name)}，下方我方 ${dn(ally.name)}`}>
+          {/* Enemy side fills the arena; the ally side is drawn over it and grows upward. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-red-950 via-red-900/70 to-red-500/40">
+            <div className="absolute top-2 right-2" ref={enemyRef}>
+              <CharacterArt tag={enemy} className="text-[8.5rem] sm:text-[10rem] drop-shadow-[0_0_18px_rgba(248,113,113,0.6)]" scale={1} />
+            </div>
+            <div className="absolute top-3 left-3 max-w-[45%]">
+              <p className="text-xs text-red-200">敵方</p>
+              <p className="font-display text-base truncate">{dn(enemy.name)}</p>
+              <p className="text-xs text-red-200">SPD {enemy.stats.spd}</p>
+            </div>
           </div>
-          <div className="absolute bottom-3 left-4 text-center max-w-[65%]">
-            <p className="text-xs text-cyan-200 mb-1">我方</p>
-            <CharacterArt tag={ally} className="text-4xl mb-1" />
-            <p className="font-display text-sm truncate">{dn(ally.name)}</p>
-            <p className="text-xs text-cyan-200">SPD {ally.stats.spd}</p>
+          <div className="absolute inset-0 duel-shift bg-blue-950 bg-gradient-to-t from-blue-950 via-blue-900/80 to-cyan-500/40"
+            style={{ clipPath: allyClipPath(geometry) }}>
+            <div className={`absolute duel-shift ${won ? 'opacity-0' : 'opacity-100'} bottom-2 left-2`}>
+              <CharacterArt tag={ally} className="text-[8.5rem] sm:text-[10rem] drop-shadow-[0_0_18px_rgba(103,232,249,0.6)]" scale={1} />
+            </div>
+            <div className={`absolute bottom-3 right-3 max-w-[45%] text-right duel-shift ${won ? 'opacity-0' : 'opacity-100'}`}>
+              <p className="text-xs text-cyan-200">我方</p>
+              <p className="font-display text-base truncate">{dn(ally.name)}</p>
+              <p className="text-xs text-cyan-200">SPD {ally.stats.spd}</p>
+            </div>
           </div>
-          <svg aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M 0 0 L 100 100" stroke="#67E8F9" strokeWidth="0.8" />
-          </svg>
-          <span aria-hidden="true" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200 bg-bg-dark p-2 text-gold font-display italic">VS</span>
+          {!result && (
+            <>
+              <div aria-hidden="true" ref={lineRef} data-testid="speed-duel-line"
+                className="absolute inset-0 duel-shift bg-cyan-200 pointer-events-none"
+                style={{ clipPath: splitLineClipPath(geometry) }} />
+              <span aria-hidden="true" style={{ top: `${geometry.split}%` }}
+                className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 duel-shift rounded-full border border-cyan-200 bg-bg-dark px-2.5 py-2 text-gold font-display italic shadow-[0_0_14px_rgba(103,232,249,0.7)]">VS</span>
+            </>
+          )}
+          {won && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 duel-reveal" data-testid="speed-duel-victory">
+              <CharacterArt tag={ally} className="text-[13rem] sm:text-[15rem] drop-shadow-[0_0_28px_rgba(103,232,249,0.8)]" scale={1} />
+              <p className="font-display text-lg text-white">{dn(ally.name)}</p>
+            </div>
+          )}
+          {stage === 'lost' && (
+            <div className="absolute inset-0 flex items-center justify-center duel-reveal" aria-hidden="true">
+              <span className="font-display text-2xl italic text-red-200 drop-shadow">敵方先攻！</span>
+            </div>
+          )}
         </div>
       )}
 
