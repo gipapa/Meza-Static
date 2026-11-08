@@ -1,5 +1,5 @@
-import type { Tag, TrainerProfile, GameStats } from '../types';
-import { clearCharacterImages } from './characterImages';
+import type { Tag, TagMove, TrainerProfile, GameStats } from '../types';
+import { clearCharacterImages } from './characterImages.ts';
 
 const STORAGE_KEYS = {
   collection: 'meza_collection',
@@ -70,6 +70,17 @@ export function removeFromCollection(tagIds: string[]): void {
   const col = getCollection();
   const filtered = col.filter(t => !tagIds.includes(t.id));
   localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(filtered));
+}
+
+/** Change only this collected card's move; species defaults and other cards stay intact. */
+export function updateCollectionMove(tagId: string, move: TagMove): Tag | null {
+  const collection = getCollection();
+  const index = collection.findIndex(tag => tag.id === tagId);
+  if (index < 0) return null;
+  const updated = { ...collection[index], move: { ...move } };
+  collection[index] = updated;
+  localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(collection));
+  return updated;
 }
 
 /** Return a tag with stats boosted by plusLevel */

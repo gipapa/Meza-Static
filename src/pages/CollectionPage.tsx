@@ -3,12 +3,18 @@ import { Link } from 'react-router-dom';
 import { getCollection, getBattleReadyIds, toggleBattleReady, removeFromCollection } from '../lib/storage';
 import { TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
 import TagCard from '../components/TagCard';
+import MovePickerDialog from '../components/MovePickerDialog';
+import type { Tag } from '../types';
+import { useNameReveal } from '../lib/nameMask';
 
 type SortKey = 'newest' | 'grade-desc' | 'pe-desc';
 const TYPE_LIST = ['fire', 'water', 'grass', 'electric', 'psychic', 'dark', 'dragon', 'fairy', 'fighting', 'normal', 'ice', 'ghost', 'steel', 'poison', 'ground', 'flying', 'bug', 'rock'];
 
 export default function CollectionPage() {
+  const { dn } = useNameReveal();
   const [collection, setCollectionState] = useState(() => getCollection());
+  const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [moveNotice, setMoveNotice] = useState('');
   const [gradeFilter, setGradeFilter] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('newest');
@@ -67,8 +73,14 @@ export default function CollectionPage() {
         已收集 {uniqueCount} 種怪獸
       </p>
       {collection.length > 0 && (
-        <p className="text-center text-xs text-text-muted mb-6">點選卡牌可上傳或設定角色圖片 🖼️</p>
+        <p className="text-center text-xs text-text-muted mb-6">點選卡牌可設定角色圖片；下方可自由更換招式。</p>
       )}
+      {moveNotice && <p role="status" className="text-center text-sm text-neon-cyan mb-4">{moveNotice}</p>}
+      {editingTag && <MovePickerDialog tag={editingTag} onClose={() => setEditingTag(null)} onSaved={updated => {
+        refreshCollection();
+        setEditingTag(null);
+        setMoveNotice(`${dn(updated.name)} 已學會 ${updated.move.name}！`);
+      }} />}
 
       {collection.length === 0 ? (
         <div className="text-center py-16">
@@ -182,6 +194,13 @@ export default function CollectionPage() {
                   <Link to={`/collection/${tag.id}`} state={{ tag }}>
                     <TagCard tag={tag} size="md" showBack={showBack} />
                   </Link>
+                )}
+                {!deleteMode && (
+                  <button type="button" onClick={() => setEditingTag(tag)} aria-label={`更換 ${dn(tag.name)} 的招式`}
+                    className="mt-2 w-36 min-h-11 rounded-lg border border-primary/30 bg-primary/15 px-2 py-2 text-xs text-primary-light hover:bg-primary/30">
+                    <span className="block truncate text-text-primary mb-1">{tag.move.name}</span>
+                    更換招式
+                  </button>
                 )}
                 {!deleteMode && (
                   <button

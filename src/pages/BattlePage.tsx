@@ -10,6 +10,7 @@ import { calcDamage, calcEnemyDamage, rollAttackRoulette } from '../lib/battle';
 import { getTypeMultiplier, getEffectivenessLabel, getEffectivenessColor } from '../lib/typeChart';
 import TagCard from '../components/TagCard';
 import StepDialog from '../components/StepDialog';
+import SpeedCompareDialog from '../components/SpeedCompareDialog';
 import MoveAnimationOverlay from '../phaser/MoveAnimationOverlay';
 import TypeChartTable from '../components/TypeChartTable';
 import { playBGM, stopBGM } from '../lib/bgm';
@@ -116,8 +117,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const battleOverlayDoneRef = useRef<(() => void) | null>(null);
 
   /* Speed */
-  const [, setPlayerFirst] = useState(true);
-  const playerFirstRef = useRef(true); // always sync with playerFirst to avoid stale closures
+  const playerFirstRef = useRef(true);
 
   /* Effectiveness */
   const [effectLabel, setEffectLabel] = useState<string | null>(null);
@@ -155,34 +155,6 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
-
-  /* ================================================================
-   *  PHASE : speed-compare
-   * ================================================================ */
-  useEffect(() => {
-    if (phase !== 'speed-compare' || allyIdx === null) return;
-    const ally = allies[allyIdx];
-    const enemy = enemies[enemyIdx];
-    const aSpd = ally.tag.stats.spd;
-    const eSpd = enemy.tag.stats.spd;
-    const first = aSpd >= eSpd;
-    setPlayerFirst(first);
-    playerFirstRef.current = first;
-    setMessage(`⚡ 速度比較 — ${dn(ally.tag.name)} SPD ${aSpd}  vs  ${dn(enemy.tag.name)} SPD ${eSpd}`);
-    setSubMessage(first ? `${dn(ally.tag.name)} 先攻！` : `${dn(enemy.tag.name)} 先攻！`);
-
-    const t = setTimeout(() => {
-      if (first) {
-        setPhase('roulette');
-        setMessage(`${dn(ally.tag.name)} 先攻！點擊「停止」來停下轉盤！`);
-        setSubMessage('');
-      } else {
-        doEnemyAttack();
-      }
-    }, 2000);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, allyIdx]);
 
   /* ================================================================
    *  Roulette spin
@@ -279,6 +251,18 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     setSubMessage('');
     setMashTimeLeft(2500);
     setPhase('mash');
+  };
+
+  const finishSpeedCompare = (playerFirst: boolean) => {
+    if (phase !== 'speed-compare' || !activeAlly) return;
+    playerFirstRef.current = playerFirst;
+    if (playerFirst) {
+      setPhase('roulette');
+      setMessage(`${dn(activeAlly.tag.name)} 先攻！點擊「停止」來停下轉盤！`);
+      setSubMessage('');
+    } else {
+      doEnemyAttack();
+    }
   };
 
   /* ── Player attack ── */
@@ -516,6 +500,9 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
       </div>
 
       {/* ── Roulette & Mash ── */}
+      {phase === 'speed-compare' && activeAlly && (
+        <SpeedCompareDialog ally={activeAlly.tag} enemy={activeEnemy.tag} onComplete={finishSpeedCompare} />
+      )}
       {(phase === 'roulette' || phase === 'mash' || phase === 'player-attack-anim') && (
         <div className="fixed bottom-0 inset-x-0 z-40 bg-bg-dark border-t border-primary/40 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <p role="status" className="text-center text-sm font-display mb-3">{phase === 'roulette' ? '下一步：按「停止轉盤」，決定攻擊倍率' : phase === 'mash' ? '現在快速連打下方大按鈕！' : '攻擊演出中，請稍候…'}</p>

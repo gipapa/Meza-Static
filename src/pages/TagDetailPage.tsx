@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useParams, Link } from 'react-router-dom';
 import type { Tag } from '../types';
 import { TYPE_COLORS, TYPE_NAMES_ZH } from '../data/monsters';
 import CharacterArt from '../components/CharacterArt';
 import CharacterImageEditor from '../components/CharacterImageEditor';
-import { getEffectiveTag } from '../lib/storage';
+import { getCollection, getEffectiveTag } from '../lib/storage';
+import MovePickerDialog from '../components/MovePickerDialog';
 import { useNameReveal } from '../lib/nameMask';
 
 export default function TagDetailPage() {
   const location = useLocation();
-  const tag = (location.state as { tag: Tag })?.tag;
+  const { tagId } = useParams();
+  const [tag, setTag] = useState(() => getCollection().find(item => item.id === tagId)
+    ?? (location.state as { tag: Tag } | null)?.tag);
+  const [editingMove, setEditingMove] = useState(false);
+  const [moveNotice, setMoveNotice] = useState('');
   const [flipped, setFlipped] = useState(false);
   const { dn } = useNameReveal();
 
@@ -101,6 +106,20 @@ export default function TagDetailPage() {
         </div>
       </div>
 
+      <div className="mt-6 rounded-xl border border-white/10 bg-bg-card p-4">
+        <h3 className="font-display mb-2">出戰招式</h3>
+        <div className="flex justify-between text-sm mb-3">
+          <span>{tag.move.name} <span style={{ color: TYPE_COLORS[tag.move.type] }}>{TYPE_NAMES_ZH[tag.move.type] ?? tag.move.type}</span></span>
+          <span>威力 {tag.move.power}</span>
+        </div>
+        <button type="button" onClick={() => setEditingMove(true)} className="w-full min-h-12 bg-primary/20 text-primary-light rounded-lg font-display">更換招式</button>
+        {moveNotice && <p role="status" className="text-neon-cyan text-sm mt-3">{moveNotice}</p>}
+      </div>
+      {editingMove && <MovePickerDialog tag={tag} onClose={() => setEditingMove(false)} onSaved={updated => {
+        setTag(updated);
+        setEditingMove(false);
+        setMoveNotice(`已學會 ${updated.move.name}！`);
+      }} />}
       <CharacterImageEditor tag={tag} />
     </div>
   );
