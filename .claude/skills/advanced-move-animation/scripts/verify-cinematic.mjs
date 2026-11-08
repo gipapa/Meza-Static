@@ -5,6 +5,8 @@
  *  Usage (dev server must be running: `npm run dev`):
  *    node .claude/skills/advanced-move-animation/scripts/verify-cinematic.mjs \
  *      --move 花瓣舞 [--base http://localhost:5173/Meza-Static/] [--out ./cinematic-check] [--side ally|enemy|both]
+ *      [--render-samples-only] (update every 30 fps step, render only sampled frames;
+ *      use separate continuous playback to review motion and rendering performance)
  *
  *  Needs Google Chrome (override with CHROME=/path/to/chrome) and Node ≥ 22.6
  *  (type stripping, to import the timelines from src/).
@@ -69,7 +71,21 @@ const errors = () => events.filter(e => e.method === 'Runtime.exceptionThrown' |
   .map(e => (e.params.exceptionDetails?.exception?.description || e.params.args?.map(a => a.value ?? a.description).join(' ') || '').split('\n')[0]);
 let nav = 0;
 const go = async hash => { await send('Page.navigate', { url: `${BASE}?r=${++nav}${hash}` }); await sleep(800); };
-const shot = async name => { const r = await send('Page.captureScreenshot', { format: 'png' }); writeFileSync(join(OUT, name), Buffer.from(r.result.data, 'base64')); };
+const shot = async name => {
+  // GPU-backed headless Chrome can briefly reject capture while presenting a frame.
+  // Retry the read only; never advance scene time or skip a failed screenshot.
+  let failure;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await send('Page.captureScreenshot', { format: 'png' });
+    if (r.result?.data) {
+      writeFileSync(join(OUT, name), Buffer.from(r.result.data, 'base64'));
+      return;
+    }
+    failure = r.error;
+    await sleep(200);
+  }
+  throw new Error(`Screenshot ${name} failed: ${JSON.stringify(failure)}`);
+};
 
 const results = [];
 const check = (name, pass, detail = '') => { results.push({ name, pass: !!pass, detail }); console.log(`${pass ? '✔' : '✖'} ${name}${detail && !pass ? ` — ${detail}` : ''}`); };
@@ -125,12 +141,13 @@ try {
         const alive = () => scene.sys?.isActive?.() !== false;
         while (alive() && scene.elapsedMs < ms && n++ < 100000) {
           window.__fakeNow += dt;
-          g.step(performance.now(), dt);
+          g.${args['render-samples-only'] ? 'headlessStep' : 'step'}(performance.now(), dt);
           const now = scene.elapsedMs;
           stagnant = now === last ? stagnant + 1 : 0;
           last = now;
           if (stagnant > 120) break; // destroyed/paused scene; avoid a runaway test loop
         }
+        ${args['render-samples-only'] ? 'if (alive()) g.step(performance.now(), 0);' : ''}
         return scene.elapsedMs;
       };
       return scene.elapsedMs; })()`);
@@ -182,7 +199,7 @@ try {
     await q(`localStorage.removeItem('meza_character_images')`);
   }
 } catch (e) {
-  check('run', false, String(e.message || e));
+  check('run', false, [String(e.message || e), ...errors().slice(0, 3)].join(' | '));
 } finally {
   chrome.kill();
   await sleep(300);

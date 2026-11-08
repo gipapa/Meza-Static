@@ -10,6 +10,9 @@
 //  - Positions by side in two-shots: enemy top, ally bottom (resolveBattleLayout). Never flip sprites.
 //  - Screen-space UI (cut-ins, titles, flashes) goes into this.uiBack / uiMid / uiTop.
 //  - Every looping effect returns a stop fn → push it to this.stops and call stopAll() at a beat change.
+//  - Read reference/vfx-art-direction.md: attack VFX use layered light, flow and residual trails.
+//    Emoji/custom actor art belong to portraits and actors, never projectile/particle textures.
+//    The shared converge() emits petals: use it only when the move actually calls for petals.
 import Phaser from 'phaser';
 import CinematicScene from './CinematicScene';
 import { TEMPLATE_MOVE_TIMELINE } from './templateMoveTimeline';
@@ -18,7 +21,7 @@ import { addActorSprite, baseScale } from '../actorArt';
 import type { ActorSprite } from '../actorArt';
 import {
   DESIGN_H as H, DESIGN_W as W, FONT_TC, TEX,
-  burst, concentrationLines, converge, cutIn, emitter, eyeCatch, floatNumber,
+  burst, concentrationLines, cutIn, emitter, every, eyeCatch, floatNumber,
   hexToNum, letterbox, ring, screenFlash, slash, stamp, txt,
 } from './fx';
 
@@ -85,6 +88,18 @@ export default class TemplateMoveScene extends CinematicScene {
     this.stops = [];
   }
 
+  /** Neutral light-thread gathering; replace its motion/palette to suit the move. */
+  private gatherEnergy() {
+    return every(this, 120, () => {
+      const a = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      const thread = this.add.image(A_POS.x + Math.cos(a) * 190, A_POS.y + Math.sin(a) * 190, TEX.streak)
+        .setRotation(a).setTint(this.color).setDisplaySize(32, 3).setAlpha(0.8)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: thread, x: A_POS.x, y: A_POS.y, alpha: 0,
+        displayWidth: 4, duration: 850, ease: 'Cubic.easeIn', onComplete: () => thread.destroy() });
+    });
+  }
+
   /* ──────────────────────────── direction ─────────────────────────── */
 
   protected direct() {
@@ -148,7 +163,7 @@ export default class TemplateMoveScene extends CinematicScene {
     this.phase('charge', 0, () => {
       this.cut(A_POS.x, A_POS.y, 1.1);
       this.zoomTo(1.5, 8000);
-      this.stops.push(converge(this, A_POS.x, A_POS.y, { tints: MOTIF_TINTS }));
+      this.stops.push(this.gatherEnergy());
       this.stops.push(concentrationLines(this, this.uiBack, W / 2, H * 0.6, { color: this.color, alpha: 0.25 }));
     });
     this.phase('charge', 5000, () => this.shake(5000, 0.0025));

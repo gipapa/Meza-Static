@@ -37,6 +37,9 @@ A fan-made arcade tag-battle web game inspired by the MEZASTAR arcade series. Ba
 Monster names are masked by default (first and last character shown, middle replaced with `O`) to avoid trademark and copyright issues with third-party intellectual property contained in the data layer.
 
 ### Animations (Reusable Overlay System)
+
+完整招式、進階動畫完成狀態與 AI 製作者：[招式動畫清單](docs/move-animation-status.md)。更新清單：`npm run moves:status`。
+
 - **`AnimationOverlay`** — shared full-screen modal frame used by all animation sequences
 - **`BattleOverlayAnimation`** — centered card duel view: attacker lunges, particles burst on defender, damage number pops; accepts any `attacker` / `defender` Tag pair — reusable anywhere
 - **`BattleProjectile`** — fixed-position projectile system with 8 path variants (straight, arc, zigzag, wobble, scatter, parabolic, curve-s, fade-in) and per-type trail particles

@@ -8,6 +8,7 @@
 - 屬性（`move.type`）：　主色：`TYPE_COLORS[type]`
 - cinematic id（kebab-case）：　Scene 類別：`<Name>Scene`　Scene key：`'<Name>Scene'`
 - 本體 phase id（kebab-case，不可用固定 id）：
+- AI 原始製作者／修訂者與證據（同步 credits.ts；未確認填待確認）：
 - 使用此招式的怪獸（`grep "name: '<招式>'" src/data/monsters.ts`）：
 
 ## 主題
@@ -17,6 +18,13 @@
 - 台詞（cut-in 2–3 行）：
 - 終結技名稱（finale 標題）：
 - 英文副標（標題卡下方）：
+
+## 光影與動態（先讀 reference/vfx-art-direction.md）
+- 亮芯／屬性能量體／柔光暈／次級粒子如何組合：
+- 能量前進路徑、前緣、尾流與命中後消散：
+- 角色立繪與攻擊 VFX 如何分工（emoji 不作彈體）：
+- 參考既有動畫的哪種粒子層次／鏡頭節奏，以及本招的差異：
+- 要額外檢視的實際移動／命中／最大衝擊時間點：
 
 ## Timeline（總長 60 000 ms，範圍見 spec.ts）
 | # | phase id | label | 秒數 | 範圍 | 內容（鏡頭／特效） |

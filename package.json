@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test 'tests/**/*.test.ts'"
+    "test": "node --test 'tests/**/*.test.ts'",
+    "moves:status": "node scripts/move-animation-status.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",

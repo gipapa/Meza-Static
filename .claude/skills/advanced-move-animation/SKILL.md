@@ -8,8 +8,12 @@ description: 設計與實作 Meza-Static 的「進階招式動畫」（機器人
 每個有進階版的招式都是**一個獨立的 Phaser scene**，長度**固定 60 秒**，遵循同一個 7 段骨架。
 沒有進階版的招式一律播放簡易版（`BattleScene`）。玩家在設定頁切換簡易／進階，預設簡易。
 
+> 光影粒子品質規範：`reference/vfx-art-direction.md`（設計前必讀）。
 > 參考實作：花瓣舞（`reference/petal-dance.md`）。主題對照：`reference/type-themes.md`。
 > 模板：`templates/`。驗證腳本：`scripts/`。
+> 完成狀態與 AI 製作者：`docs/move-animation-status.md`，由 `npm run moves:status` 產生。
+
+**視覺方向**：攻擊以分層光影、流動粒子、能量拖尾、殘光與衝擊波呈現。角色 emoji 只作未設定自訂圖片時的角色立繪；不得把 emoji、角色立繪或放大的圖示當成攻擊彈體射向目標。龍系以氣流、光帶與粒子暗示龍威，不用實心卡通龍頭、粗線蛇形或徽章貼圖代替能量演出。
 
 ---
 
@@ -33,6 +37,7 @@ description: 設計與實作 Meza-Static 的「進階招式動畫」（機器人
 1. **簡易／進階切換**：`resolveMoveAnimation` 只在 `quality === 'advanced'` 且招式有對應時回傳 advanced；其餘全部 simple。選擇在 overlay 掛載時固定。
 2. **只對應完成的招式**：`ADVANCED_MOVE_ANIMATIONS` 只能放已完成、驗證過的招式。不要為了示範加半成品或空 scene。
 3. **立繪 fallback**：立繪一律用 `addActorSprite(scene, x, y, actor, fontPx, { resolution: 2 })`，`actor` 直接傳 `this.attacker`／`this.defender`／`this.d.enemy`／`this.d.ally`（含 `emoji`、`art`、`artKey`）。不要自己 `add.text(emoji)` 或載入圖片；scene 內不得做任何非同步載入。cut-in／eye-catch 用 `{ ...this.attacker, ... }`。
+   這是角色呈現規則；攻擊 VFX 請自行生成幾何、柔光 texture 與粒子，不使用 `addActorSprite()`、emoji 字元或角色圖片作彈體／粒子 texture。
 4. **敵我方向**：雙人鏡頭敵方在上、我方在下（`resolveBattleLayout`）；cut-in 我方從左、敵方從右（`fromLeft: this.d.isPlayerAttacking`）。不要 flip 或用負 scale。
 5. **跳過**：使用者可隨時跳過，`onComplete` 只會觸發一次（由 overlay 與 `finish()` 保證）。scene 不要自行呼叫 `onComplete`。
 
@@ -60,13 +65,14 @@ description: 設計與實作 Meza-Static 的「進階招式動畫」（機器人
 
 ## 3. 依招式名稱與屬性決定演出
 
-1. **讀資料**：`grep -n "name: '<招式>'" src/data/monsters.ts` 確認招式名稱（必須完全一致）、`type` 與會用這招的怪獸。
+1. **讀資料**：`rg -n "name: '<招式>'" src/data/monsters.ts` 確認招式名稱（必須完全一致）、`type` 與會用這招的怪獸；完整目錄以 `src/data/moves.ts` 為準。
 2. **屬性基底**：在 `reference/type-themes.md` §1 找出輔色、粒子母題、背景、鏡頭感、節奏、音效方向。主色固定是 `this.d.typeColor`（`TYPE_COLORS`）。
 3. **名稱關鍵字**：§2 依關鍵字（舞／斬／拳／光束／雷／波／爆／龍…）決定本體與終結的演出；多個關鍵字時以最後一個字為主（「花瓣**舞**」→ 舞）。
 4. **骨架語彙**：§3 機器人大戰風固定語彙必須全部出現：警告帶、cut-in 台詞、標題卡、蓄力特寫、eye-catch ×2、本體多波命中、終結技名、FINISH。
 5. **節奏與鏡頭**：遵守 §4（每段至少一個 ≥2 s 的穩定鏡頭、衝擊前先收後放、文字 ≥1.5 s）。
 6. **音效**：在 brief 的 cue sheet 寫出方向（§5）。目前 cinematic 靜音，**不要**在這個 skill 的流程中順便實作音效系統，除非使用者要求。
-7. 把結果填進 `templates/design-brief.md`，再寫成 scene 開頭的 shot list 註解。
+7. **光影設計**：依 `reference/vfx-art-direction.md` 描述亮芯、主色能量體、柔光暈、次級粒子如何配合；明確寫出流動、拖尾與命中後消散，不能只有一個物件從 A tween 到 B。注意共用 `converge()` 會產生花瓣，非草系改用招式自己的 light-thread／spark 聚氣。
+8. 把結果填進 `templates/design-brief.md`，再寫成 scene 開頭的 shot list 註解。
 
 ---
 
@@ -81,7 +87,8 @@ description: 設計與實作 Meza-Static 的「進階招式動畫」（機器人
 5. **註冊 scene**：`registry.ts` 的 `CINEMATICS` 加 `'flame-burst': { key: FLAME_BURST_SCENE_KEY, scene: FlameBurstScene, timeline: CINEMATIC_TIMELINES['flame-burst'] }`。漏了這步 `tsc` 會報錯。
 6. **對應招式**：`moveAnimations.ts` 的 `ADVANCED_MOVE_ANIMATIONS` 加 `火焰衝擊: 'flame-burst'`。這是最後一步，完成驗證前不要加。
 7. **驗證**：跑第 5 節全部項目。
-8. **回報**：新增／修改檔案、各 phase 秒數、驗證結果、截圖路徑、已知限制。
+8. **清單與歸屬**：更新 `src/phaser/cinematic/credits.ts`（原作者與修訂者分列），再執行 `npm run moves:status`。AI 身分依使用者確認、對話或明確提交註記；一般 Git author 不能證明 AI，缺證據填「待確認」。未製作招式填「未製作」，不分配作者。
+9. **回報**：新增／修改檔案、各 phase 秒數、驗證結果、代表攻擊實際效果的截圖路徑、已知限制。技術驗證通過與使用者認可視覺品質分開敘述。
 
 Scene 撰寫規則：
 - 時間：只用 `this.phase(id, offsetMs, fn)`（在 `direct()` 內）或 cue 內的 `this.cue(ms, fn)`（相對於當下），以及 tweens／`fx.after/every/onFrame`。**禁止** `setTimeout`、`setInterval`、`this.time.delayedCall`（會在掉幀時與 tween 錯位）。
@@ -99,6 +106,7 @@ Scene 撰寫規則：
 npm test          # spec：每個 timeline 剛好 60 s、7 段、範圍內；每個招式對應都有 timeline；未對應招式走簡易版
 npm run lint
 npm run build     # 同時跑 tsc -b：registry 型別保證每個 timeline 都有 scene
+npm run moves:status -- --check  # 招式、狀態與 AI 歸屬清單保持同步
 node .claude/skills/advanced-move-animation/scripts/check-templates.mjs   # 修改 fx/CinematicScene/actorArt 後，模板仍可編譯
 
 npm run dev       # 另開終端機，預設 http://localhost:5173/Meza-Static/
@@ -112,11 +120,17 @@ node .claude/skills/advanced-move-animation/scripts/verify-cinematic.mjs --move 
 - 無 console error；`quality=simple` 仍播放簡易版 `BattleScene`；
 - 每個 phase 中點的截圖輸出到 `--out`，**逐張檢視**畫面是否符合 brief。
 
+技術檢查不會判斷「帥不帥」。中點可能剛好落在 cut-in、暗場或眼部特寫收回；還要擷取 **release 能量移動、本體一次實際命中、finale 最大衝擊** 三種畫面，檢查分層、拖尾、粒子與主體辨識。至少看一次連續播放的蓄力 → 釋放 → 命中節奏，不能只依靜態截圖宣稱視覺完成。
+
 `--out` 預設 `./cinematic-check`，這是驗證產物，不要 commit（輸出到 scratchpad 或刪除）。
+
+軟體繪圖環境較慢時，可加 `--render-samples-only`：仍以 30fps 更新全部 cue、tween 與粒子，只在取樣點繪製。這可檢查時間、圖片與取樣畫面，不能用它判定即時 FPS 或取代連續播放的視覺檢查。
 
 手動確認（測試頁 `#/test/cinematic?move=<招式>&quality=advanced&side=ally|enemy&speed=1|4|10`）：
 - 手機寬度（360／390px）文字不出框、跳過按鈕可點；
 - 未設定圖片時是屬性 emoji，設定自訂圖片後是圖片（收藏 → 卡牌 → 角色圖片）；
+- 兩種角色模式的攻擊特效都由相同的光影粒子構成；確認沒有飛出去的 emoji、角色貼圖或大型圖示彈體；
+- 全白衝擊前後仍看得到能量方向、拖尾與消散，不能靠大面積閃白遮住缺少的攻擊演出；
 - 設定頁切回「簡易」後實戰播放簡易版。
 
 ---

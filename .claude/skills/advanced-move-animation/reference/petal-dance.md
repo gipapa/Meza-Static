@@ -1,6 +1,6 @@
 # 參考實作：花瓣舞（petal-dance）
 
-目前唯一完成的進階動畫，也是新招式的範本。
+此動畫由 Claude Code 製作（使用者確認），作為粒子層次與鏡頭節奏的參考。最新完成狀態見 `docs/move-animation-status.md`。
 檔案：`src/phaser/cinematic/petalDanceTimeline.ts`、`src/phaser/cinematic/PetalDanceScene.ts`。
 
 ## 主題判斷（依 type-themes.md）
@@ -34,6 +34,8 @@
 - **aftermath**：落花、防守方傾倒、TOTAL DAMAGE、FINISH!、letterbox 收回、淡出。
 
 ## 可以照抄的寫法
+
+- 攻擊本體是生成的粒子 texture、多層爆散、環繞深度與衝擊環；角色 emoji 只作角色 fallback。其他屬性應借鏡這個組成方式，不要改成一顆大型圖示彈體。
 - `direct()` 只呼叫 `directIntro()…directAftermath()`，每個 phase 一個方法，cue 都用 `this.phase(id, offset, fn)`。
 - 持續效果（emitter、集中線、onFrame）回傳 stop 函式，收進 `this.stops`，在轉場時 `stopAll()`。
 - 招式專屬的東西（`PETAL_TINTS`、花朵造型、HIT 計數）留在 scene；跨招式可重用的（cut-in、eye-catch、集中線、閃光…）在 `fx.ts`。
