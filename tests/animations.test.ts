@@ -10,6 +10,23 @@ import {
   ADVANCED_MOVE_DURATION_MS, PHASE_RULES, defineAdvancedTimeline, isCinematicId, validateAdvancedTimeline,
 } from '../src/phaser/cinematic/spec.ts';
 import { ALL_TAGS, RENTAL_TAGS } from '../src/data/monsters.ts';
+import { ALL_MOVES } from '../src/data/moves.ts';
+import { ANIMATION_CREDITS } from '../src/phaser/cinematic/credits.ts';
+
+test('the entire move catalog has distinct advanced cinematics and explicit credits', () => {
+  const names = new Set(ALL_MOVES.map(move => move.name));
+  assert.deepEqual(new Set(Object.keys(ADVANCED_MOVE_ANIMATIONS)), names);
+  const ids = Object.values(ADVANCED_MOVE_ANIMATIONS);
+  assert.equal(new Set(ids).size, names.size, 'each move owns its cinematic');
+  assert.deepEqual(new Set(ids), new Set(Object.keys(CINEMATIC_TIMELINES)));
+  assert.deepEqual(new Set(ids), new Set(Object.keys(ANIMATION_CREDITS)));
+  for (const move of ALL_MOVES) {
+    assert.deepEqual(resolveMoveAnimation(move.name, 'advanced'), { variant: 'advanced', id: ADVANCED_MOVE_ANIMATIONS[move.name] });
+    assert.deepEqual(resolveMoveAnimation(move.name, 'simple'), { variant: 'simple' });
+    const credit = ANIMATION_CREDITS[ADVANCED_MOVE_ANIMATIONS[move.name]];
+    assert.ok(credit.createdBy && credit.evidence, move.name);
+  }
+});
 
 test('settings default to simple animations', () => {
   assert.equal(DEFAULT_SETTINGS.animationQuality, 'simple');

@@ -38,7 +38,7 @@ Monster names are masked by default (first and last character shown, middle repl
 
 ### Animations (Reusable Overlay System)
 
-完整招式、進階動畫完成狀態與 AI 製作者：[招式動畫清單](docs/move-animation-status.md)。更新清單：`npm run moves:status`。
+全部 78 招已具備獨立 60 秒進階動畫（設定中可切換簡易／進階）。完整招式、完成狀態與 AI 製作者：[招式動畫清單](docs/move-animation-status.md)；測試範圍與重跑方式：[驗證紀錄](docs/move-animation-validation.md)。更新清單：`npm run moves:status`。
 
 - **`AnimationOverlay`** — shared full-screen modal frame used by all animation sequences
 - **`BattleOverlayAnimation`** — centered card duel view: attacker lunges, particles burst on defender, damage number pops; accepts any `attacker` / `defender` Tag pair — reusable anywhere
@@ -83,6 +83,15 @@ npm install
 npm run dev        # Dev server (default: localhost:5173)
 npm run build      # Type-check then production build → dist/
 npm run preview    # Preview the production build locally
+npm test           # Catalog coverage, timelines, settings and game logic
+npm run lint
+npm run moves:status -- --check
+# With the dev server running; all moves, both sides, custom art and emoji,
+# 390/360px viewports, including reduced-motion fallback; no screenshots:
+node .claude/skills/advanced-move-animation/scripts/verify-cinematic.mjs --all --art both --no-screenshots --render-samples-only
+# Seven-phase skip / cleanup / settings switching (no screenshots):
+node .claude/skills/advanced-move-animation/scripts/verify-interactions.mjs
+# Optional independent shards: add --shard 1/3, 2/3 or 3/3 and distinct --out paths.
 ```
 
 ---

@@ -579,7 +579,7 @@ export default class PetalDanceScene extends CinematicScene {
       this.zoomTo(1.15, 6500, 'Sine.easeOut');
       const fall = emitter(this, B_POS.x, -40, TEX.petal, {
         x: { min: -W / 2 - 30, max: W / 2 + 30 }, speedY: { min: 40, max: 110 }, speedX: { min: -40, max: 40 },
-        lifespan: 7000, frequency: 40, quantity: 2, scale: { min: 0.4, max: 1 },
+        lifespan: 7000, frequency: 60, quantity: 2, scale: { min: 0.4, max: 1 },
         alpha: { start: 1, end: 0.3 }, tint: [...PETAL_TINTS], rotate: spin(3),
       });
       this.stops.push(() => fall.stop());
