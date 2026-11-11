@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useCoins } from '../lib/useCoins';
 
 const MODES = [
   {
@@ -24,15 +25,24 @@ const MODES = [
 ];
 
 export default function PlayModePage() {
+  const navigate = useNavigate();
+  const { startGame } = useCoins();
+
+  const selectMode = (mode: typeof MODES[number]) => {
+    if (mode.id === 'battle') navigate(mode.to);
+    else startGame(gameId => navigate(mode.to, { state: { gameId } }));
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="font-display text-3xl text-center mb-2 neon-text">選擇模式</h1>
-      <p className="text-center text-text-muted mb-10">選擇你的冒險</p>
+      <p className="text-center text-text-muted mb-10">每次遊玩 1 枚硬幣 · 草叢額外捕獲另投 1 枚</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {MODES.map(mode => (
-          <Link
+          <button
+            type="button"
             key={mode.id}
-            to={mode.to}
+            onClick={() => selectMode(mode)}
             className="block p-6 rounded-xl bg-bg-card card-glow border border-white/5 hover:border-primary/40 transition-all"
           >
             <div className="text-5xl mb-4 text-center">{mode.icon}</div>
@@ -44,13 +54,13 @@ export default function PlayModePage() {
               <span>⏱ {mode.time}</span>
               <span>🎁 {mode.reward}</span>
             </div>
-            <button
-              className="mt-4 w-full py-2 rounded-lg font-display text-sm transition-all hover:brightness-110"
+            <span
+              className="block mt-4 w-full py-2 rounded-lg font-display text-sm transition-all hover:brightness-110"
               style={{ background: mode.color }}
             >
-              開始
-            </button>
-          </Link>
+              {mode.id === 'battle' ? '選擇區域 · 開始時投 1 枚' : '投幣開始 · 1 枚'}
+            </span>
+          </button>
         ))}
       </div>
     </div>

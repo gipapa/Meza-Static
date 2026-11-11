@@ -1,11 +1,13 @@
 import type { Tag, TagMove, TrainerProfile, GameStats } from '../types';
 import { clearCharacterImages } from './characterImages.ts';
+import { COINS_STORAGE_KEY, getWallet, parseWallet, saveWallet } from './coins.ts';
 
 const STORAGE_KEYS = {
   collection: 'meza_collection',
   trainer: 'meza_trainer',
   stats: 'meza_stats',
   battleReady: 'meza_battle_ready',
+  coins: COINS_STORAGE_KEY,
 };
 
 function getBaseId(tag: Tag): string {
@@ -153,20 +155,24 @@ export function incrementStat(key: keyof GameStats, amount = 1): void {
 }
 
 export function exportCollection(): string {
-  return JSON.stringify({ collection: getCollection(), trainer: getTrainer(), stats: getStats() }, null, 2);
+  return JSON.stringify({ collection: getCollection(), trainer: getTrainer(), stats: getStats(), coins: getWallet() }, null, 2);
 }
 
 export function importCollection(json: string): boolean {
   try {
     const data = JSON.parse(json);
+    const wallet = data.coins === undefined ? null : parseWallet(JSON.stringify(data.coins));
+    if (data.coins !== undefined && !wallet) return false;
     if (data.collection) localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(data.collection));
     if (data.trainer) localStorage.setItem(STORAGE_KEYS.trainer, JSON.stringify(data.trainer));
     if (data.stats) localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify(data.stats));
+    if (wallet) saveWallet(wallet);
     return true;
   } catch { return false; }
 }
 
 export function clearAll(): void {
   Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+  sessionStorage.removeItem('meza_active_game');
   clearCharacterImages();
 }

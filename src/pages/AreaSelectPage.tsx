@@ -5,9 +5,11 @@ import { getCollection, getBattleReadyIds, getEffectiveTag } from '../lib/storag
 import TagCard from '../components/TagCard';
 import StepDialog from '../components/StepDialog';
 import { useNameReveal } from '../lib/nameMask';
+import { useCoins } from '../lib/useCoins';
 
 export default function AreaSelectPage() {
   const navigate = useNavigate();
+  const { startGame } = useCoins();
   const { dn } = useNameReveal();
   const collection = getCollection();
   const battleReadyIds = getBattleReadyIds();
@@ -35,7 +37,7 @@ export default function AreaSelectPage() {
   const startBattle = () => {
     if (!area || selectedTags.length === 0) return;
     const tags = selectedTags.map(id => availableTags.find(t => t.id === id)!).map(getEffectiveTag);
-    navigate('/play/battle', { state: { area, playerTags: tags } });
+    startGame(gameId => navigate('/play/battle', { state: { area, playerTags: tags, gameId } }));
   };
 
   return (
@@ -105,7 +107,7 @@ export default function AreaSelectPage() {
             disabled={selectedTags.length === 0}
             className="w-full max-w-md min-h-12 px-6 py-2 bg-accent hover:bg-accent-light disabled:opacity-40 disabled:cursor-not-allowed text-white font-display rounded-lg transition-all"
           >
-            ⚔️ 進入對戰
+            🪙 投幣進入對戰 · 1 枚
           </button>
           <button type="button" onClick={() => setSelectedArea(null)} className="mt-2 min-h-11 px-4 text-sm text-text-muted">重新選擇區域</button>
           </div>

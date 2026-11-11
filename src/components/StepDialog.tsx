@@ -1,6 +1,11 @@
 import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 
+// Coin dialogs can open above an existing game step. Restore scrolling only
+// after the final modal closes, regardless of their unmount order.
+const scrollLocks = new Set<symbol>();
+let originalOverflow = '';
+
 /** A required game step: focus stays with its choices until an action advances it. */
 export default function StepDialog({ title, children, active = true }: {
   title: string;
@@ -14,12 +19,15 @@ export default function StepDialog({ title, children, active = true }: {
     if (!active) return;
     const dialog = ref.current;
     const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
+    const scrollLock = Symbol();
+    if (scrollLocks.size === 0) originalOverflow = document.body.style.overflow;
+    scrollLocks.add(scrollLock);
     dialog?.showModal();
     document.body.style.overflow = 'hidden';
     return () => {
       dialog?.close();
-      document.body.style.overflow = previousOverflow;
+      scrollLocks.delete(scrollLock);
+      if (scrollLocks.size === 0) document.body.style.overflow = originalOverflow;
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
   }, [active]);

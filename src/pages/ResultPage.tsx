@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import type { Tag } from '../types';
 import { addToCollection, incrementStat } from '../lib/storage';
 import TagCard from '../components/TagCard';
+import { useCoins } from '../lib/useCoins';
 
 interface CaughtInfo {
   tag: Tag;
@@ -13,6 +14,7 @@ interface CaughtInfo {
 export default function ResultPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { finishGame } = useCoins();
   const state = location.state as { caughtTags: Tag[]; isCatchNow?: boolean } | null;
   const saved = useRef(false);
   const [caughtInfos, setCaughtInfos] = useState<CaughtInfo[]>([]);
@@ -24,6 +26,7 @@ export default function ResultPage() {
     }
     if (saved.current) return;
     saved.current = true;
+    finishGame();
     const infos: CaughtInfo[] = [];
     state.caughtTags.forEach(tag => {
       const result = addToCollection(tag);

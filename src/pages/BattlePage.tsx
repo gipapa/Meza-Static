@@ -56,6 +56,7 @@ export default function BattlePage() {
 
 function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
   const navigate = useNavigate();
+  const { state: entryState } = useLocation();
   const { dn } = useNameReveal();
 
   /* Start battle BGM */
@@ -211,6 +212,7 @@ function BattleArena({ area, playerTags }: { area: Area; playerTags: Tag[] }) {
     const t = setTimeout(() => {
       navigate('/play/catch', {
         state: {
+          gameId: entryState?.gameId,
           area,
           playerTags,
           enemies: enemyTagsRaw,

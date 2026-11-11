@@ -14,25 +14,28 @@ import PhaserCatchOverlay from '../phaser/PhaserCatchOverlay';
 import PhaserMultiCatchOverlay from '../phaser/PhaserMultiCatchOverlay';
 import type { MultiCatchTarget } from '../phaser/MultiCatchScene';
 import { useNameReveal } from '../lib/nameMask';
+import { useCoins } from '../lib/useCoins';
 
 type Phase = 'last-select' | 'ball-wheel' | 'multi-catch' | 'catch-result' | 'bonus' | 'bonus-stop' | 'bonus-result' | 'done';
 
 export default function CatchPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { insertCoin } = useCoins();
   const state = location.state as {
-    area: Area;
-    playerTags: Tag[];
-    enemies: Tag[];
-    catchGauge: number;
-    bossDefeated: boolean;
+    gameId: string;
+    area?: Area;
+    playerTags?: Tag[];
+    enemies?: Tag[];
+    catchGauge?: number;
+    bossDefeated?: boolean;
   } | null;
 
   // Also handle "Catch Now" mode (no battle state)
-  const isCatchNow = !state;
+  const isCatchNow = location.pathname === '/play/catch-now';
 
   const catchGauge = state?.catchGauge ?? 50;
-  const enemies = state?.enemies ?? shuffle(ALL_TAGS.filter(t => t.grade <= 4)).slice(0, 3);
+  const [enemies] = useState(() => state?.enemies ?? shuffle(ALL_TAGS.filter(t => t.grade <= 4)).slice(0, 3));
   const { dn } = useNameReveal();
 
   const [phase, setPhase] = useState<Phase>(isCatchNow ? 'last-select' : 'ball-wheel');
@@ -138,9 +141,12 @@ export default function CatchPage() {
   };
 
   const goToBonus = () => {
-    setPhase('bonus');
-    setBonusStopped(false);
-    setMessage('額外捕獲時間！在草叢上停下游標！');
+    if (phase !== 'catch-result') return;
+    insertCoin(() => {
+      setPhase('bonus');
+      setBonusStopped(false);
+      setMessage('額外捕獲時間！在草叢上停下游標！');
+    });
   };
 
   const stopBonus = () => {
@@ -271,7 +277,7 @@ export default function CatchPage() {
                 onClick={goToBonus}
                 className="min-h-12 px-4 py-2 bg-primary hover:bg-primary-light text-white font-display rounded-lg text-sm"
               >
-                → 額外捕獲
+                🪙 草叢額外捕獲 · 1 枚
               </button>
             )}
             <button

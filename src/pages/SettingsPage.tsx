@@ -6,6 +6,7 @@ import { updateSettings } from '../lib/settings';
 import type { AnimationQuality } from '../lib/settings';
 import { useSettings } from '../lib/useSettings';
 import { ADVANCED_MOVE_ANIMATIONS } from '../phaser/cinematic/moveAnimations';
+import { useCoins } from '../lib/useCoins';
 
 const QUALITY_OPTIONS: { value: AnimationQuality; label: string; desc: string }[] = [
   { value: 'simple', label: '簡易', desc: '約 3 秒的短動畫，對戰節奏快。' },
@@ -19,6 +20,8 @@ export default function SettingsPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { animationQuality } = useSettings();
+  const { balance, requestMomCoin } = useCoins();
+  const [momCoins, setMomCoins] = useState(0);
 
   const handleExport = () => {
     const data = exportCollection();
@@ -61,6 +64,17 @@ export default function SettingsPage() {
             📖 遊戲說明
           </Link>
         </nav>
+
+        <div className="bg-bg-card rounded-xl p-5 border border-gold/25">
+          <h2 className="font-display text-sm mb-2 text-gold">🪙 遊戲硬幣 · {balance} 枚</h2>
+          <p className="text-text-muted text-xs mb-3">初始 3 枚；之後每日首次登入領 2 枚。每次遊玩、草叢額外捕獲各需 1 枚。</p>
+          <button type="button" onClick={() => {
+            if (requestMomCoin()) setMomCoins(count => count + 1);
+          }} className="min-h-11 w-full px-4 py-2 rounded-lg bg-gold text-bg-dark font-display text-sm hover:brightness-110">
+            媽媽砸摳 · +1 枚
+          </button>
+          <p role="status" className="text-xs mt-2 text-gold">{momCoins > 0 ? `媽媽給你硬幣了！本次已拿 ${momCoins} 枚 🪙` : '想再玩一次？每按一次就能拿 1 枚！'}</p>
+        </div>
 
         <div className="bg-bg-card rounded-xl p-5 border border-white/5">
           <h2 className="font-display text-sm mb-3">🔊 音量</h2>
@@ -106,7 +120,7 @@ export default function SettingsPage() {
         {/* Export */}
         <div className="bg-bg-card rounded-xl p-5 border border-white/5">
           <h2 className="font-display text-sm mb-2">📤 匯出收藏</h2>
-          <p className="text-text-muted text-xs mb-3">將你的收藏、訓練家檔案和統計數據下載為 JSON 檔案。</p>
+          <p className="text-text-muted text-xs mb-3">將你的收藏、訓練家檔案、統計數據和硬幣下載為 JSON 檔案。</p>
           <button onClick={handleExport} className="px-4 py-1.5 bg-primary/20 text-primary-light rounded text-sm hover:bg-primary/30 font-display">
             下載 JSON
           </button>
@@ -129,7 +143,7 @@ export default function SettingsPage() {
         {/* Danger Zone */}
         <div className="bg-bg-card rounded-xl p-5 border border-accent/20">
           <h2 className="font-display text-sm mb-2 text-accent">⚠️ 危險區域</h2>
-          <p className="text-text-muted text-xs mb-3">清除所有本地資料，包括收藏、訓練家檔案和統計數據。此操作無法復原。</p>
+          <p className="text-text-muted text-xs mb-3">清除所有本地資料，包括收藏、訓練家檔案、統計數據和硬幣。此操作無法復原。</p>
           {!showConfirm ? (
             <button
               onClick={() => setShowConfirm(true)}

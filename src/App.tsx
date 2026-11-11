@@ -13,34 +13,38 @@ import TrainerPage from './pages/TrainerPage';
 import HowToPage from './pages/HowToPage';
 import SettingsPage from './pages/SettingsPage';
 import { TestBattlePage, TestWheelPage, TestCatchPage, TestCinematicPage } from './pages/TestBattlePage';
+import CoinProvider from './components/CoinProvider';
+import PaidGame from './components/PaidGame';
 
 export default function App() {
   return (
     <HashRouter>
-      <div className="min-h-dvh flex flex-col">
-        <Header />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/play" element={<PlayModePage />} />
-            <Route path="/play/area" element={<AreaSelectPage />} />
-            <Route path="/play/battle" element={<BattlePage />} />
-            <Route path="/play/catch" element={<CatchPage />} />
-            <Route path="/play/catch-now" element={<CatchPage />} />
-            <Route path="/result" element={<ResultPage />} />
-            <Route path="/collection" element={<CollectionPage />} />
-            <Route path="/collection/:tagId" element={<TagDetailPage />} />
-            <Route path="/trainer" element={<TrainerPage />} />
-            <Route path="/howto" element={<HowToPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/test/battle" element={<TestBattlePage />} />
-            <Route path="/test/wheel" element={<TestWheelPage />} />
-            <Route path="/test/catch" element={<TestCatchPage />} />
-            <Route path="/test/cinematic" element={<TestCinematicPage />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+      <CoinProvider>
+        <div className="min-h-dvh flex flex-col">
+          <Header />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/play" element={<PlayModePage />} />
+              <Route path="/play/area" element={<AreaSelectPage />} />
+              <Route path="/play/battle" element={<PaidGame><BattlePage /></PaidGame>} />
+              <Route path="/play/catch" element={<PaidGame><CatchPage /></PaidGame>} />
+              <Route path="/play/catch-now" element={<PaidGame><CatchPage /></PaidGame>} />
+              <Route path="/result" element={<ResultPage />} />
+              <Route path="/collection" element={<CollectionPage />} />
+              <Route path="/collection/:tagId" element={<TagDetailPage />} />
+              <Route path="/trainer" element={<TrainerPage />} />
+              <Route path="/howto" element={<HowToPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/test/battle" element={<TestBattlePage />} />
+              <Route path="/test/wheel" element={<TestWheelPage />} />
+              <Route path="/test/catch" element={<TestCatchPage />} />
+              <Route path="/test/cinematic" element={<TestCinematicPage />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </CoinProvider>
     </HashRouter>
   );
 }
