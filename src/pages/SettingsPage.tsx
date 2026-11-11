@@ -5,14 +5,12 @@ import { exportCollection, importCollection, clearAll } from '../lib/storage';
 import { updateSettings } from '../lib/settings';
 import type { AnimationQuality } from '../lib/settings';
 import { useSettings } from '../lib/useSettings';
-import { ADVANCED_MOVE_ANIMATIONS } from '../phaser/cinematic/moveAnimations';
 import { useCoins } from '../lib/useCoins';
 
 const QUALITY_OPTIONS: { value: AnimationQuality; label: string; desc: string }[] = [
   { value: 'simple', label: '簡易', desc: '約 3 秒的短動畫，對戰節奏快。' },
   { value: 'advanced', label: '進階', desc: '招式專屬的長演出（cut-in、蓄力、鏡頭運鏡），可隨時跳過。' },
 ];
-const ADVANCED_MOVES = Object.keys(ADVANCED_MOVE_ANIMATIONS);
 
 export default function SettingsPage() {
   const [muted, setMuted] = useState(isMuted);
@@ -113,7 +111,7 @@ export default function SettingsPage() {
             ))}
           </div>
           <p className="text-text-muted text-xs">
-            已有進階演出的招式：{ADVANCED_MOVES.join('、')}。其他招式在進階模式下仍使用簡易動畫。
+            支援的招式會播放專屬演出，其餘使用簡易動畫。
           </p>
         </div>
 
